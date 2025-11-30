@@ -1,11 +1,11 @@
-// src/pages/LoginPage.tsx
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { login } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -34,8 +34,11 @@ const LoginPage = () => {
     }
   };
 
+  const onLoginPage = location.pathname === "/login";
+  const onRegisterPage = location.pathname === "/register";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+    <div className="page-fade-in min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md">
         {/* LOGO + TITULO */}
         <div className="flex flex-col items-center mb-6">
@@ -52,17 +55,39 @@ const LoginPage = () => {
 
         {/* CARD PRINCIPAL */}
         <div className="rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl shadow-black/40 p-6 sm:p-8 backdrop-blur">
+          {/* BOTÓN VOLVER AL INICIO */}
+          <div className="mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center text-xs font-semibold text-sky-400 hover:text-sky-300"
+            >
+              <span className="mr-1">←</span>
+              Volver al inicio
+            </Link>
+          </div>
+
           {/* TABS */}
           <div className="flex rounded-xl bg-slate-800 p-1 mb-6">
-            <button
-              type="button"
-              className="flex-1 rounded-lg bg-slate-900 text-sm font-medium text-slate-50 py-2 shadow-sm"
+            <Link
+              to="/login"
+              className={[
+                "flex-1 rounded-lg text-center text-sm font-medium py-2 transition",
+                onLoginPage
+                  ? "bg-slate-900 text-slate-50 shadow-sm"
+                  : "text-slate-400 hover:text-slate-100",
+              ].join(" ")}
             >
               Iniciar Sesión
-            </button>
+            </Link>
+
             <Link
               to="/register"
-              className="flex-1 rounded-lg text-center text-sm font-medium text-slate-400 py-2 hover:text-slate-100"
+              className={[
+                "flex-1 rounded-lg text-center text-sm font-medium py-2 transition",
+                onRegisterPage
+                  ? "bg-slate-900 text-slate-50 shadow-sm"
+                  : "text-slate-400 hover:text-slate-100",
+              ].join(" ")}
             >
               Registrarse
             </Link>
@@ -130,12 +155,14 @@ const LoginPage = () => {
                 />
                 <label htmlFor="remember">Recordar sesión</label>
               </div>
-              <button
-                type="button"
+
+              {/* LINK A FORGOT PASSWORD */}
+              <Link
+                to="/forgot"
                 className="text-blue-400 hover:text-blue-300 font-medium"
               >
                 ¿Olvidaste tu contraseña?
-              </button>
+              </Link>
             </div>
 
             <button

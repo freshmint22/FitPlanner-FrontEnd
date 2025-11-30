@@ -1,128 +1,70 @@
-// src/router/AppRouter.tsx
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from 'react-router-dom';
 
-import LoginPage from "@/pages/LoginPage";
-import RegisterPage from "@/pages/RegisterPage";
-import UserDashboard from "@/pages/UserDashboard";
-import AdminDashboard from "@/pages/AdminDashboard";
+import MainLayout from '@/layouts/MainLayout';
+import PublicLayout from '@/layouts/PublicLayout';
+import PrivateRoute from './PrivateRoute';
 
-import ClassesPage from "@/pages/ClassesPage";
-import RoutinesPage from "@/pages/RoutinesPage";
-import MembersPage from "@/pages/MembersPage";
-import MembershipsPage from "@/pages/MembershipsPage";
-import ReportsPage from "@/pages/ReportsPage";
-import SettingsPage from "@/pages/SettingsPage";
+import HomePage from '@/pages/HomePage';
+import LoginPage from '@/pages/LoginPage';
+import RegisterPage from '@/pages/RegisterPage';
 
-import PrivateRoute from "./PrivateRoute";
-import MainLayout from "@/layouts/MainLayout";
+// Recuperar contraseña
+import ForgotPasswordPage from '@/pages/ForgotPasswordPage';
+import EmailSentPage from '@/pages/EmailSentPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
 
-const AppRouter = () => {
+
+// Páginas de usuario
+import UserDashboardPage from '@/pages/UserDashboard';
+import ClassesPage from '@/pages/ClassesPage';
+import RoutinesPage from '@/pages/RoutinesPage';
+import SettingsPage from '@/pages/SettingsPage';
+
+// Páginas de admin
+import AdminDashboardPage from '@/pages/AdminDashboard';
+import MembersPage from '@/pages/MembersPage';
+import MembershipsPage from '@/pages/MembershipsPage';
+import ReportsPage from '@/pages/ReportsPage';
+
+export default function AppRouter() {
   return (
     <Routes>
-      {/* Rutas públicas */}
-      <Route path="/" element={<LoginPage />} />
-      <Route path="/register" element={<RegisterPage />} />
+      {/* ================== RUTAS PÚBLICAS (con PublicLayout) ================== */}
+      <Route element={<PublicLayout />}>
+        {/* Home landing */}
+        <Route path="/" element={<HomePage />} />
 
-      {/* Panel usuario (USER o ADMIN) */}
-      <Route
-        path="/dashboard"
-        element={
-          <PrivateRoute allowedRoles={["USER", "ADMIN"]}>
-            <MainLayout>
-              <UserDashboard />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
+        {/* Auth públicas */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-      {/* Clases (ambos roles) */}
-      <Route
-        path="/classes"
-        element={
-          <PrivateRoute allowedRoles={["USER", "ADMIN"]}>
-            <MainLayout>
-              <ClassesPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
+        {/* Flujo de recuperación de contraseña */}
+        <Route path="/forgot" element={<ForgotPasswordPage />} />
+        <Route path="/forgot/sent" element={<EmailSentPage />} />
+        <Route path="/reset-password" element={<ResetPasswordPage />} />
+      </Route>
 
-      {/* Rutinas (ambos roles) */}
-      <Route
-        path="/routines"
-        element={
-          <PrivateRoute allowedRoles={["USER", "ADMIN"]}>
-            <MainLayout>
-              <RoutinesPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
+      {/* =============== RUTAS PROTEGIDAS (requieren login) =============== */}
+      <Route element={<PrivateRoute />}>
+        <Route element={<MainLayout />}>
+          {/* Rutas generales (USER y ADMIN) */}
+          <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/classes" element={<ClassesPage />} />
+          <Route path="/routines" element={<RoutinesPage />} />
+          <Route path="/settings" element={<SettingsPage />} />
 
-      {/* Admin dashboard (solo ADMIN) */}
-      <Route
-        path="/admin"
-        element={
-          <PrivateRoute allowedRoles={["ADMIN"]}>
-            <MainLayout>
-              <AdminDashboard />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
+          {/* Rutas solo ADMIN */}
+          <Route element={<PrivateRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/admin" element={<AdminDashboardPage />} />
+            <Route path="/members" element={<MembersPage />} />
+            <Route path="/memberships" element={<MembershipsPage />} />
+            <Route path="/reports" element={<ReportsPage />} />
+          </Route>
+        </Route>
+      </Route>
 
-      {/* Miembros (solo ADMIN) */}
-      <Route
-        path="/members"
-        element={
-          <PrivateRoute allowedRoles={["ADMIN"]}>
-            <MainLayout>
-              <MembersPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
-
-      {/* Membresías (solo ADMIN) */}
-      <Route
-        path="/memberships"
-        element={
-          <PrivateRoute allowedRoles={["ADMIN"]}>
-            <MainLayout>
-              <MembershipsPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
-
-      {/* Reportes (solo ADMIN) */}
-      <Route
-        path="/reports"
-        element={
-          <PrivateRoute allowedRoles={["ADMIN"]}>
-            <MainLayout>
-              <ReportsPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
-
-      {/* Configuración (ambos roles) */}
-      <Route
-        path="/settings"
-        element={
-          <PrivateRoute allowedRoles={["USER", "ADMIN"]}>
-            <MainLayout>
-              <SettingsPage />
-            </MainLayout>
-          </PrivateRoute>
-        }
-      />
-
-      {/* Cualquier ruta rara → login */}
+      {/* Cualquier otra ruta → ir al home público */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
-};
-
-export default AppRouter;
+}

@@ -1,11 +1,11 @@
-// src/pages/RegisterPage.tsx
 import type { FormEvent } from "react";
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerRequest, type Role } from "@/api/authService";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -62,7 +62,7 @@ const RegisterPage = () => {
       });
 
       setSuccess("Cuenta creada correctamente. Ahora puedes iniciar sesión.");
-      setTimeout(() => navigate("/"), 1500);
+      setTimeout(() => navigate("/login"), 1500);
     } catch (err) {
       console.error(err);
       setError(
@@ -73,8 +73,11 @@ const RegisterPage = () => {
     }
   };
 
+  const onLoginPage = location.pathname === "/login";
+  const onRegisterPage = location.pathname === "/register";
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-950 px-4">
+    <div className="page-fade-in min-h-screen flex items-center justify-center bg-slate-950 px-4">
       <div className="w-full max-w-md">
         {/* LOGO + TITULO */}
         <div className="flex flex-col items-center mb-6">
@@ -91,20 +94,41 @@ const RegisterPage = () => {
 
         {/* CARD PRINCIPAL */}
         <div className="rounded-2xl bg-slate-900/80 border border-slate-800 shadow-xl shadow-black/40 p-6 sm:p-8 backdrop-blur">
+          {/* BOTÓN VOLVER AL INICIO */}
+          <div className="mb-4">
+            <Link
+              to="/"
+              className="inline-flex items-center text-xs font-semibold text-sky-400 hover:text-sky-300"
+            >
+              <span className="mr-1">←</span>
+              Volver al inicio
+            </Link>
+          </div>
+
           {/* TABS */}
           <div className="flex rounded-xl bg-slate-800 p-1 mb-6">
             <Link
-              to="/"
-              className="flex-1 rounded-lg text-center text-sm font-medium text-slate-400 py-2 hover:text-slate-100"
+              to="/login"
+              className={[
+                "flex-1 rounded-lg text-center text-sm font-medium py-2 transition",
+                onLoginPage
+                  ? "bg-slate-900 text-slate-50 shadow-sm"
+                  : "text-slate-400 hover:text-slate-100",
+              ].join(" ")}
             >
               Iniciar Sesión
             </Link>
-            <button
-              type="button"
-              className="flex-1 rounded-lg bg-slate-900 text-sm font-medium text-slate-50 py-2 shadow-sm"
+            <Link
+              to="/register"
+              className={[
+                "flex-1 rounded-lg text-center text-sm font-medium py-2 transition",
+                onRegisterPage
+                  ? "bg-slate-900 text-slate-50 shadow-sm"
+                  : "text-slate-400 hover:text-slate-100",
+              ].join(" ")}
             >
               Registrarse
-            </button>
+            </Link>
           </div>
 
           {/* TITULO */}
@@ -257,7 +281,7 @@ const RegisterPage = () => {
           <p className="mt-4 text-[11px] text-center text-slate-500">
             ¿Ya tienes una cuenta?{" "}
             <Link
-              to="/"
+              to="/login"
               className="font-semibold text-blue-400 hover:text-blue-300"
             >
               Inicia sesión aquí.

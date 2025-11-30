@@ -1,405 +1,311 @@
 // src/layouts/MainLayout.tsx
-import { ReactNode, useState } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
+import { useState } from 'react';
+import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { GlobalAnimations } from '@/components/ui/GlobalAnimations'; // 👈 CAMBIO
 
-interface MainLayoutProps {
-  children: ReactNode;
+
+// Tipado simple para los ítems del menú
+interface NavItem {
+  label: string;
+  to: string;
+  icon?: string;
 }
 
-const navClasses =
-  "flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-medium transition-colors";
-const navInactive =
-  "text-slate-400 hover:text-slate-100 hover:bg-slate-800/70";
-const navActive =
-  "bg-slate-800 text-slate-100 shadow-fp-soft border border-slate-700";
+const userNav: NavItem[] = [
+  { label: 'Dashboard usuario', to: '/dashboard', icon: '🏠' },
+  { label: 'Clases', to: '/classes', icon: '📅' },
+  { label: 'Rutinas', to: '/routines', icon: '💪' },
+];
 
-const MainLayout = ({ children }: MainLayoutProps) => {
+const adminNav: NavItem[] = [
+  { label: 'Dashboard admin', to: '/admin', icon: '📊' },
+  { label: 'Miembros', to: '/members', icon: '🧑‍🤝‍🧑' },
+  { label: 'Membresías', to: '/memberships', icon: '💳' },
+  { label: 'Reportes', to: '/reports', icon: '📈' },
+];
+
+const accountNav: NavItem[] = [
+  { label: 'Perfil', to: '/settings', icon: '🕴️' },
+];
+
+// Botón hamburguesa (solo móvil)
+function BurgerButton({ onClick }: { onClick: () => void }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center justify-center rounded-[1.75rem] border border-slate-700/70 bg-slate-900/80 p-3 text-slate-100 shadow-sm backdrop-blur lg:hidden"
+    >
+      <span className="sr-only">Abrir menú</span>
+      <span className="flex flex-col gap-1.5">
+        <span className="h-1 w-6 rounded-full bg-slate-100" />
+        <span className="h-1 w-6 rounded-full bg-slate-100" />
+        <span className="h-1 w-6 rounded-full bg-slate-100" />
+      </span>
+    </button>
+  );
+}
+
+interface SidebarProps {
+  onClose?: () => void;
+  isMobile?: boolean;
+  className?: string;
+}
+
+function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
   const { user, logout } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const navigate = useNavigate();
-
-  const isAdmin = user?.role === "ADMIN";
+  const isAdmin = user?.role === 'ADMIN';
 
   const handleLogout = () => {
     logout();
-    navigate("/");
+    if (onClose) onClose();
   };
 
-  const closeSidebar = () => setSidebarOpen(false);
+  const baseClasses = isMobile
+    ? 'flex h-full w-72 flex-col overflow-y-auto bg-[#020617]/95 text-slate-100 shadow-2xl backdrop-blur'
+    : 'hidden w-72 flex-col overflow-y-auto border-r border-slate-800/70 bg-[#020617] text-slate-100 lg:flex lg:h-screen lg:sticky lg:top-0';
 
   return (
-    <div className="min-h-screen bg-fp-bg text-fp-text-main">
-      {/* TOPBAR MOBILE */}
-      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-950/95 px-4 py-3 lg:hidden">
-        {/* Botón hamburguesa (izquierda) */}
-        <button
-          onClick={() => setSidebarOpen((prev) => !prev)}
-          className="
-            flex flex-col items-center justify-center
-            gap-[6px]
-            h-11 w-11
-            rounded-2xl
-            bg-white/5
-            border border-white/10
-            shadow-lg
-            backdrop-blur-sm
-            active:scale-95
-            transition
-          "
-        >
-          <span className="w-6 h-[3px] bg-white rounded-full"></span>
-          <span className="w-6 h-[3px] bg-white rounded-full"></span>
-          <span className="w-6 h-[3px] bg-white rounded-full"></span>
-        </button>
-
-
-        {/* Logo / título centro */}
-        <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-sky-500 to-indigo-500 text-sm font-bold text-white">
-            FP
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-200">
-              FitPlanner Manager
-            </p>
-            <p className="text-[10px] text-slate-500">
-              {user?.role === "ADMIN" ? "Administrador" : "Usuario"}
-            </p>
-          </div>
-        </div>
-
-        {/* Espacio de la derecha (podrías poner avatar en el futuro) */}
-        <div className="h-10 w-10" />
-      </div>
-
-      {/* CONTENEDOR PRINCIPAL */}
-      <div className="flex">
-        {/* SIDEBAR DESKTOP (columna izquierda fija) */}
-        <aside className="hidden h-[calc(100vh-0px)] w-64 flex-shrink-0 border-r border-slate-800 bg-slate-950/95 px-4 py-5 lg:flex lg:flex-col lg:sticky lg:top-0">
-          {/* Logo */}
-          <div className="flex items-center gap-3 px-1">
-            <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 text-sm font-bold text-white">
+    <aside className={`${baseClasses} ${className}`}>
+      <div className="flex flex-1 flex-col">
+        {/* Header del sidebar */}
+        <div className="flex items-center justify-between border-b border-slate-800/60 px-5 py-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-emerald-500 text-sm font-semibold text-slate-950 shadow-lg">
               FP
             </div>
-            <div>
-              <p className="text-xs font-semibold text-slate-200">
-                FitPlanner
-              </p>
-              <p className="text-[10px] text-slate-500">Gym Management</p>
+            <div className="flex flex-col leading-tight">
+              <span className="text-xs font-medium text-slate-400">
+                FITPLANNER MANAGER
+              </span>
+              <span className="text-sm font-semibold text-slate-100">
+                Gym Management
+              </span>
             </div>
           </div>
 
-          {/* Navegación */}
-          <nav className="mt-6 flex-1 space-y-6 text-xs">
-            <div>
-              <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                General
-              </p>
-              <div className="space-y-1">
-                <NavLink
-                  to="/dashboard"
-                  className={({ isActive }) =>
-                    `${navClasses} ${isActive ? navActive : navInactive}`
-                  }
-                >
-                  <span>🏠</span>
-                  <span>Dashboard usuario</span>
-                </NavLink>
-                <NavLink
-                  to="/classes"
-                  className={({ isActive }) =>
-                    `${navClasses} ${isActive ? navActive : navInactive}`
-                  }
-                >
-                  <span>📅</span>
-                  <span>Clases</span>
-                </NavLink>
-                <NavLink
-                  to="/routines"
-                  className={({ isActive }) =>
-                    `${navClasses} ${isActive ? navActive : navInactive}`
-                  }
-                >
-                  <span>🏋️‍♂️</span>
-                  <span>Rutinas</span>
-                </NavLink>
-              </div>
-            </div>
-
-            {isAdmin && (
-              <div>
-                <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                  Administración
-                </p>
-                <div className="space-y-1">
-                  <NavLink
-                    to="/admin"
-                    className={({ isActive }) =>
-                      `${navClasses} ${isActive ? navActive : navInactive}`
-                    }
-                  >
-                    <span>📊</span>
-                    <span>Dashboard admin</span>
-                  </NavLink>
-                  <NavLink
-                    to="/members"
-                    className={({ isActive }) =>
-                      `${navClasses} ${isActive ? navActive : navInactive}`
-                    }
-                  >
-                    <span>👤</span>
-                    <span>Miembros</span>
-                  </NavLink>
-                  <NavLink
-                    to="/memberships"
-                    className={({ isActive }) =>
-                      `${navClasses} ${isActive ? navActive : navInactive}`
-                    }
-                  >
-                    <span>💳</span>
-                    <span>Membresías</span>
-                  </NavLink>
-                  <NavLink
-                    to="/reports"
-                    className={({ isActive }) =>
-                      `${navClasses} ${isActive ? navActive : navInactive}`
-                    }
-                  >
-                    <span>📈</span>
-                    <span>Reportes</span>
-                  </NavLink>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                Cuenta
-              </p>
-              <div className="space-y-1">
-                <NavLink
-                  to="/settings"
-                  className={({ isActive }) =>
-                    `${navClasses} ${isActive ? navActive : navInactive}`
-                  }
-                >
-                  <span>⚙️</span>
-                  <span>Configuración</span>
-                </NavLink>
-              </div>
-            </div>
-          </nav>
-
-          {/* Footer usuario (desktop) */}
-          <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/70 px-3 py-3 text-xs">
-            <p className="text-[10px] text-slate-500">Administrador</p>
-            <p className="text-xs font-medium text-slate-100 truncate">
-              {user?.email ?? "usuario@fitplanner.com"}
-            </p>
-            <p className="mt-1 text-[11px] text-slate-500">
-              ROL: {user?.role ?? "USER"}
-            </p>
+          {isMobile && (
             <button
+              type="button"
+              onClick={onClose}
+              className="rounded-full border border-slate-700/70 bg-slate-900/80 px-3 py-1 text-xs font-medium text-slate-100 shadow"
+            >
+              Cerrar
+            </button>
+          )}
+        </div>
+
+        {/* Navegación */}
+        <nav className="flex-1 space-y-8 px-4 py-6">
+          {/* Sección usuario */}
+          <div>
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              General
+            </p>
+            <div className="space-y-1">
+              {userNav.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                      isActive
+                        ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
+                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
+                    ].join(' ')
+                  }
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+
+          {/* Sección administración (solo ADMIN) */}
+          {isAdmin && (
+            <div>
+              <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Administración
+              </p>
+              <div className="space-y-1">
+                {adminNav.map((item) => (
+                  <NavLink
+                    key={item.to}
+                    to={item.to}
+                    onClick={onClose}
+                    className={({ isActive }) =>
+                      [
+                        'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                        isActive
+                          ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
+                          : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
+                      ].join(' ')
+                    }
+                  >
+                    <span className="text-lg">{item.icon}</span>
+                    <span>{item.label}</span>
+                  </NavLink>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Sección cuenta */}
+          <div>
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Cuenta
+            </p>
+            <div className="space-y-1">
+              {accountNav.map((item) => (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  onClick={onClose}
+                  className={({ isActive }) =>
+                    [
+                      'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                      isActive
+                        ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
+                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
+                    ].join(' ')
+                  }
+                >
+                  <span className="text-lg">{item.icon}</span>
+                  <span>{item.label}</span>
+                </NavLink>
+              ))}
+            </div>
+          </div>
+        </nav>
+
+        {/* Bloque usuario + logout */}
+        <div className="border-t border-slate-800/70 px-4 py-4">
+          <div className="rounded-2xl bg-slate-900/80 px-4 py-3 shadow-inner">
+            <div className="mb-2 flex items-center gap-3">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-slate-50">
+                {user?.name?.[0]?.toUpperCase() ?? 'U'}
+              </div>
+              <div className="leading-tight">
+                <p className="text-xs font-medium text-slate-400">
+                  {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
+                </p>
+                <p className="text-sm font-semibold text-slate-100">
+                  {user?.name ?? 'Sesión activa'}
+                </p>
+                {user?.email && (
+                  <p className="truncate text-[11px] text-slate-500">
+                    {user.email}
+                  </p>
+                )}
+              </div>
+            </div>
+            <button
+              type="button"
               onClick={handleLogout}
-              className="mt-2 w-full rounded-full bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-100 hover:bg-slate-700"
+              className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-rose-500 to-red-500 px-3 py-2 text-xs font-semibold text-white shadow hover:from-rose-400 hover:to-red-400"
             >
               Cerrar sesión
             </button>
           </div>
-        </aside>
+        </div>
+      </div>
+    </aside>
+  );
+}
 
-        {/* OVERLAY + SIDEBAR MOBILE (se desliza desde la izquierda) */}
-        {sidebarOpen && (
-          <>
-            {/* Fondo oscuro */}
-            <div
-              className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden"
-              onClick={closeSidebar}
-            />
-            {/* Panel lateral */}
-            <aside
-              className={`
-                fixed inset-y-0 left-0 z-50 w-64 border-r border-slate-800
-                bg-slate-950/95 px-4 py-5 shadow-fp-card transform
-                transition-transform duration-300 ease-out lg:hidden
-                flex flex-col h-full
-                ${sidebarOpen ? "translate-x-0" : "-translate-x-full"}
-              `}
-            >
-              {/* Encabezado del panel */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 px-1">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-sky-500 to-indigo-500 text-sm font-bold text-white">
-                    FP
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-200">
-                      FitPlanner
-                    </p>
-                    <p className="text-[10px] text-slate-500">
-                      Gym Management
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={closeSidebar}
-                  className="rounded-full border border-slate-700 bg-slate-900 px-2 py-1 text-xs text-slate-300"
-                >
-                  Cerrar
-                </button>
-              </div>
+export default function MainLayout() {
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarClosing, setSidebarClosing] = useState(false);
+  const { user } = useAuth();
+  const location = useLocation();
 
-              {/* Navegación móvil */}
-              <nav className="mt-6 flex-1 space-y-6 text-xs overflow-y-auto">
-                <div>
-                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    General
-                  </p>
-                  <div className="space-y-1">
-                    <NavLink
-                      to="/dashboard"
-                      onClick={closeSidebar}
-                      className={({ isActive }) =>
-                        `${navClasses} ${
-                          isActive ? navActive : navInactive
-                        }`
-                      }
-                    >
-                      <span>🏠</span>
-                      <span>Dashboard usuario</span>
-                    </NavLink>
-                    <NavLink
-                      to="/classes"
-                      onClick={closeSidebar}
-                      className={({ isActive }) =>
-                        `${navClasses} ${
-                          isActive ? navActive : navInactive
-                        }`
-                      }
-                    >
-                      <span>📅</span>
-                      <span>Clases</span>
-                    </NavLink>
-                    <NavLink
-                      to="/routines"
-                      onClick={closeSidebar}
-                      className={({ isActive }) =>
-                        `${navClasses} ${
-                          isActive ? navActive : navInactive
-                        }`
-                      }
-                    >
-                      <span>🏋️‍♂️</span>
-                      <span>Rutinas</span>
-                    </NavLink>
-                  </div>
-                </div>
+  const openSidebar = () => {
+    setSidebarClosing(false);
+    setSidebarOpen(true);
+  };
 
-                {isAdmin && (
-                  <div>
-                    <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                      Administración
-                    </p>
-                    <div className="space-y-1">
-                      <NavLink
-                        to="/admin"
-                        onClick={closeSidebar}
-                        className={({ isActive }) =>
-                          `${navClasses} ${
-                            isActive ? navActive : navInactive
-                          }`
-                        }
-                      >
-                        <span>📊</span>
-                        <span>Dashboard admin</span>
-                      </NavLink>
-                      <NavLink
-                        to="/members"
-                        onClick={closeSidebar}
-                        className={({ isActive }) =>
-                          `${navClasses} ${
-                            isActive ? navActive : navInactive
-                          }`
-                        }
-                      >
-                        <span>👤</span>
-                        <span>Miembros</span>
-                      </NavLink>
-                      <NavLink
-                        to="/memberships"
-                        onClick={closeSidebar}
-                        className={({ isActive }) =>
-                          `${navClasses} ${
-                            isActive ? navActive : navInactive
-                          }`
-                        }
-                      >
-                        <span>💳</span>
-                        <span>Membresías</span>
-                      </NavLink>
-                      <NavLink
-                        to="/reports"
-                        onClick={closeSidebar}
-                        className={({ isActive }) =>
-                          `${navClasses} ${
-                            isActive ? navActive : navInactive
-                          }`
-                        }
-                      >
-                        <span>📈</span>
-                        <span>Reportes</span>
-                      </NavLink>
-                    </div>
-                  </div>
-                )}
+  const startCloseSidebar = () => {
+    setSidebarClosing(true);
+    setTimeout(() => {
+      setSidebarOpen(false);
+      setSidebarClosing(false);
+    }, 280);
+  };
 
-                <div>
-                  <p className="mb-2 px-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">
-                    Cuenta
-                  </p>
-                  <div className="space-y-1">
-                    <NavLink
-                      to="/settings"
-                      onClick={closeSidebar}
-                      className={({ isActive }) =>
-                        `${navClasses} ${
-                          isActive ? navActive : navInactive
-                        }`
-                      }
-                    >
-                      <span>⚙️</span>
-                      <span>Configuración</span>
-                    </NavLink>
-                  </div>
-                </div>
-              </nav>
+  return (
+    <div className="min-h-screen bg-[#020617] text-slate-100">
+      {/* 🔁 Animaciones globales (page-fade-in, card-pop, etc.) */}
+      <GlobalAnimations />
 
-              {/* Footer usuario (mobile) */}
-              <div className="mt-4 rounded-2xl border border-slate-800 bg-slate-900/80 px-3 py-3 text-xs">
-                <p className="text-[10px] text-slate-500">Administrador</p>
-                <p className="text-xs font-medium text-slate-100 truncate">
-                  {user?.email ?? "usuario@fitplanner.com"}
-                </p>
-                <p className="mt-1 text-[11px] text-slate-500">
-                  ROL: {user?.role ?? "USER"}
-                </p>
-                <button
-                  onClick={handleLogout}
-                  className="mt-2 w-full rounded-full bg-slate-800 px-2 py-1 text-[11px] font-medium text-slate-100 hover:bg-slate-700"
-                >
-                  Cerrar sesión
-                </button>
-              </div>
-            </aside>
-          </>
+      <div className="flex min-h-screen">
+        {/* Sidebar escritorio con animación al montar */}
+        <Sidebar className="sidebar-animate-in" />
+
+        {/* Overlay + sidebar móvil */}
+        {(sidebarOpen || sidebarClosing) && (
+          <div
+            className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden ${
+              sidebarClosing ? 'overlay-animate-out' : 'overlay-animate-in'
+            }`}
+          >
+            <div className="absolute inset-0" onClick={startCloseSidebar} />
+            <div className="absolute inset-y-0 left-0 max-w-[18rem]">
+              <Sidebar
+                isMobile
+                onClose={startCloseSidebar}
+                className={
+                  sidebarClosing ? 'sidebar-animate-out' : 'sidebar-animate-in'
+                }
+              />
+            </div>
+          </div>
         )}
 
-        {/* CONTENIDO PRINCIPAL */}
-        <main className="flex-1">{children}</main>
+        {/* Contenido principal */}
+        <main className="flex-1">
+          <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
+            <header className="flex items-center justify-between gap-4">
+              <BurgerButton onClick={openSidebar} />
+
+              <div className="flex-1 text-right lg:text-left">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                  FitPlanner Manager
+                </p>
+                <p className="text-sm font-semibold text-slate-100">
+                  {user?.role === 'ADMIN'
+                    ? 'Panel administrativo'
+                    : 'Panel de usuario'}
+                </p>
+              </div>
+
+              <div className="hidden items-center gap-3 lg:flex">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-slate-50">
+                  {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-slate-400">
+                    {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-100">
+                    {user?.name ?? 'Sesión activa'}
+                  </p>
+                </div>
+              </div>
+            </header>
+
+            {/* Fade-in por ruta */}
+            <div className="relative min-h-[60vh] rounded-3xl bg-[#020617] overflow-hidden">
+              <div key={location.pathname} className="page-fade-in h-full">
+                <Outlet />
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
     </div>
   );
-};
-
-export default MainLayout;
+}

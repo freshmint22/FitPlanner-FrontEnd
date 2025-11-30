@@ -42,7 +42,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           id: 'demo-1',
           name: 'Administrador',
           email: 'admin@fitplanner.com',
-          role: 'USER', // ✔️ ADMIN por defecto
+          role: 'ADMIN', // ✔️ ADMIN por defecto
         },
         token: 'demo-token',
         isAuthenticated: true,
