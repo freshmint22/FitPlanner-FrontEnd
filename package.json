@@ -41,4 +41,11 @@
     "vite": "^7.2.6",
     "vitest": "^4.0.14"
   }
+  ,
+  "vitest": {
+    "test": {
+      "environment": "jsdom",
+      "globals": true
+    }
+  }
 }
