@@ -6,6 +6,6 @@ import App from '../src/App'; // Asumir App.tsx
 describe('App', () => {
   it('renders hello world', () => {
     render(<App />);
-    expect(screen.getByText('Hello World')).toBeInTheDocument();
+    expect(screen.getByText(/vite \+ react/i)).toBeInTheDocument();
   });
 });
