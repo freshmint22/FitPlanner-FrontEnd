@@ -19,7 +19,8 @@ export function useScrollReveal(
     // Si no hay nodo o el navegador no soporta IntersectionObserver,
     // mostramos directamente el contenido.
     if (!node || typeof IntersectionObserver === 'undefined') {
-      setIsVisible(true);
+      // Evita setState síncrono dentro del efecto — use microtask
+      window.setTimeout(() => setIsVisible(true), 0);
       return;
     }
 

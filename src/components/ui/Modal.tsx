@@ -35,17 +35,32 @@ export function Modal({
 
   // Animación de entrada/salida
   useEffect(() => {
+    let mountTimer: number | undefined;
     if (isOpen) {
-      setIsMounted(true);
-      setAnimationClass('modal-animate-in');
+      // Evita setState síncrono dentro del efecto — usar microtask
+      mountTimer = window.setTimeout(() => {
+        setIsMounted(true);
+        setAnimationClass('modal-animate-in');
+      }, 0);
     } else if (isMounted) {
-      setAnimationClass('modal-animate-out');
+      // Evitamos setState síncrono dentro del efecto
+      const animTimer = window.setTimeout(() => {
+        setAnimationClass('modal-animate-out');
+      }, 0);
+
       const timeout = setTimeout(() => {
         setIsMounted(false);
       }, 240); // coincide con modalOut (0.24s)
 
-      return () => clearTimeout(timeout);
+      return () => {
+        clearTimeout(animTimer);
+        clearTimeout(timeout);
+      };
     }
+
+    return () => {
+      if (mountTimer) clearTimeout(mountTimer);
+    };
   }, [isOpen, isMounted]);
 
   if (!isMounted) return null;
