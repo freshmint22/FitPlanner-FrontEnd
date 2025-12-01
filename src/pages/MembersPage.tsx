@@ -1,0 +1,96 @@
+// src/pages/MembersPage.tsx
+const mockMembers = [
+  {
+    id: 1,
+    name: "Ana Torres",
+    email: "ana.torres@gym.com",
+    plan: "Mensual Premium",
+    status: "Activa",
+    nextPayment: "30 / 11 / 2025",
+  },
+  {
+    id: 2,
+    name: "Juan Pérez",
+    email: "juan.perez@gym.com",
+    plan: "Trimestral",
+    status: "Por vencer",
+    nextPayment: "05 / 12 / 2025",
+  },
+  {
+    id: 3,
+    name: "Carlos López",
+    email: "carlos.lopez@gym.com",
+    plan: "Mensual",
+    status: "Vencida",
+    nextPayment: "Hoy",
+  },
+];
+
+const MembersPage = () => {
+  return (
+    <div className="min-h-full bg-slate-950 pb-10">
+      <div className="mx-auto max-w-6xl px-4 pt-6 space-y-6">
+        <section className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-50">
+                Miembros del gimnasio
+              </h2>
+              <p className="text-xs text-slate-400">
+                Administra la base de datos de miembros y sus planes.
+              </p>
+            </div>
+            <div className="flex gap-2">
+              <input
+                className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 outline-none placeholder:text-slate-500 focus:border-blue-500 focus:ring-1 focus:ring-blue-500/40"
+                placeholder="Buscar por nombre o correo..."
+              />
+              <button className="rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
+                Nuevo miembro
+              </button>
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-xs text-left text-slate-300">
+              <thead className="border-b border-slate-800 text-[11px] text-slate-500 uppercase">
+                <tr>
+                  <th className="py-2 pr-4">Nombre</th>
+                  <th className="py-2 pr-4">Correo</th>
+                  <th className="py-2 pr-4">Plan</th>
+                  <th className="py-2 pr-4">Próximo pago</th>
+                  <th className="py-2 pr-4 text-right">Estado</th>
+                </tr>
+              </thead>
+              <tbody>
+                {mockMembers.map((m) => (
+                  <tr key={m.id} className="border-b border-slate-900">
+                    <td className="py-2 pr-4 text-slate-100">{m.name}</td>
+                    <td className="py-2 pr-4">{m.email}</td>
+                    <td className="py-2 pr-4">{m.plan}</td>
+                    <td className="py-2 pr-4">{m.nextPayment}</td>
+                    <td className="py-2 pr-4 text-right">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          m.status === "Activa"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : m.status === "Por vencer"
+                            ? "bg-amber-500/10 text-amber-300"
+                            : "bg-red-500/10 text-red-400"
+                        }`}
+                      >
+                        {m.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+};
+
+export default MembersPage;
