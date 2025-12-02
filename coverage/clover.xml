@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<coverage generated="1764630469720" clover="3.2.0">
+  <project timestamp="1764630469721" name="All files">
+    <metrics statements="3" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="1" elements="6" coveredelements="3" complexity="0" loc="3" ncloc="3" packages="2" files="3" classes="3"/>
+    <package name="src">
+      <metrics statements="3" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="1"/>
+      <file name="App.css" path="C:\Users\andre\OneDrive\Escritorio\Documents\PROYECTO DS2\FitPlanner\Frontend\src\App.css">
+        <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      </file>
+      <file name="App.tsx" path="C:\Users\andre\OneDrive\Escritorio\Documents\PROYECTO DS2\FitPlanner\Frontend\src\App.tsx">
+        <metrics statements="3" coveredstatements="2" conditionals="0" coveredconditionals="0" methods="3" coveredmethods="1"/>
+        <line num="7" count="1" type="stmt"/>
+        <line num="9" count="1" type="stmt"/>
+        <line num="21" count="0" type="stmt"/>
+      </file>
+    </package>
+    <package name="src.assets">
+      <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      <file name="react.svg" path="C:\Users\andre\OneDrive\Escritorio\Documents\PROYECTO DS2\FitPlanner\Frontend\src\assets\react.svg">
+        <metrics statements="0" coveredstatements="0" conditionals="0" coveredconditionals="0" methods="0" coveredmethods="0"/>
+      </file>
+    </package>
+  </project>
+</coverage>
