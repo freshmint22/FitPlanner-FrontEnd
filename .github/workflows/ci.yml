@@ -20,7 +20,8 @@ jobs:
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm install
+        working-directory: Frontend
+        run: npm ci
 
       - name: Show Node & npm versions
         run: |
@@ -28,9 +29,11 @@ jobs:
           npm -v
 
       - name: Lint code
+        working-directory: Frontend
         run: npm run lint
 
       - name: Run tests
+        working-directory: Frontend
         run: npm run test
         env:
           CI: true
@@ -43,6 +46,7 @@ jobs:
           name: codecov-umbrella
 
       - name: Build project
+        working-directory: Frontend
         run: npm run build
 
       - name: Upload build artifact
