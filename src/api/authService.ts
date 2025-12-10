@@ -4,12 +4,13 @@ import axiosClient from "./axiosClient";
 export type Role = "ADMIN" | "USER";
 
 export interface LoginResponse {
-  accessToken: string;
-  user: {
+  accessToken?: string;
+  token?: string;
+  user?: {
     id: string;
-    name: string;
-    email: string;
-    role: Role;
+    name?: string;
+    email?: string;
+    role?: Role;
   };
 }
 
@@ -18,7 +19,27 @@ export const loginRequest = async (email: string, password: string) => {
     email,
     password,
   });
-  return data;
+
+  // Some backends return { token } or { accessToken }. Normalize to accessToken.
+  const accessToken = (data as any).accessToken || (data as any).token;
+
+  // If server returned user info, use it; otherwise try to fetch profile endpoint.
+  let user = data.user;
+  if (!user && accessToken) {
+    try {
+      const profile = await axiosClient.get('/users/profile');
+      user = {
+        id: profile.data?.id || profile.data?.email || 'unknown',
+        name: profile.data?.name || profile.data?.email || 'Usuario',
+        email: profile.data?.email,
+        role: (profile.data?.role as Role) || 'USER',
+      };
+    } catch (err) {
+      // ignore profile fetch errors
+    }
+  }
+
+  return { accessToken, user } as { accessToken?: string; user?: LoginResponse['user'] };
 };
 
 export interface RegisterPayload {
