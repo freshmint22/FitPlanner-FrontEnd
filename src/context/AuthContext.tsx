@@ -1,37 +1,10 @@
 // src/context/AuthContext.tsx
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-} from 'react';
+import { useState, ReactNode } from 'react';
 import { loginRequest } from '@/api/authService';
-
-type Role = 'ADMIN' | 'USER';
-
-export interface AuthUser {
-  id: string;
-  name: string;
-  email: string;
-  role: Role;
-}
-
-interface AuthState {
-  user: AuthUser | null;
-  token: string | null;
-  isAuthenticated: boolean;
-}
-
-interface AuthContextValue extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
-}
+import { AuthContext } from './authContextCore';
 
 // ⚠️ Pon esto en false cuando conectes el backend real
 const DESIGN_MODE = true;
-
-const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AuthState>(() => {
@@ -49,29 +22,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       };
     }
 
-    // Comportamiento real (sin modo diseño)
+    // Intentamos rehidratar desde localStorage al inicializar el estado
+    try {
+      if (typeof window !== 'undefined') {
+        const token = localStorage.getItem('accessToken');
+        const user = localStorage.getItem('user');
+        if (token && user) {
+          return {
+            token,
+            user: JSON.parse(user),
+            isAuthenticated: true,
+          };
+        }
+      }
+    } catch {
+      // Ignorar errores de acceso a localStorage
+    }
+
+    // Comportamiento real por defecto
     return {
       user: null,
       token: null,
       isAuthenticated: false,
     };
   });
-
-  // Rehidratar sesión desde localStorage al cargar la app
-  useEffect(() => {
-    if (DESIGN_MODE) return; // En modo diseño no rehidratamos nada
-
-    const token = localStorage.getItem('accessToken');
-    const user = localStorage.getItem('user');
-
-    if (token && user) {
-      setState({
-        token,
-        user: JSON.parse(user),
-        isAuthenticated: true,
-      });
-    }
-  }, []);
 
   const login = async (email: string, password: string) => {
     if (DESIGN_MODE) {
@@ -124,10 +98,5 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useAuth = () => {
-  const ctx = useContext(AuthContext);
-  if (!ctx) {
-    throw new Error('useAuth debe usarse dentro de AuthProvider');
-  }
-  return ctx;
-};
+// `useAuth` moved to `src/context/useAuth.ts` to keep this file exporting
+// only components (improves Fast Refresh compatibility).

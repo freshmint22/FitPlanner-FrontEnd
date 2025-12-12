@@ -1,7 +1,7 @@
 // src/layouts/MainLayout.tsx
 import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 import { GlobalAnimations } from '@/components/ui/GlobalAnimations'; // 👈 CAMBIO
 
 

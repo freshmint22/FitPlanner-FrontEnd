@@ -2,9 +2,9 @@ name: CI Frontend
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, develop, advg ]
   pull_request:
-    branches: [ main ]
+    branches: [ main, develop ]
 
 jobs:
   ci:
@@ -16,17 +16,22 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm install
+
+      - name: Show Node & npm versions
+        run: |
+          node -v
+          npm -v
 
       - name: Lint code
         run: npm run lint
 
       - name: Run tests
-        run: npm run test -- --coverage --watchAll=false
+        run: npm run test
         env:
           CI: true
 

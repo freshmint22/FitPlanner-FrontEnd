@@ -1,4 +1,3 @@
-// src/components/ui/PageHeader.tsx
 import type { ReactNode } from 'react';
 
 interface PageHeaderProps {
@@ -40,3 +39,4 @@ export function PageHeader({ title, subtitle, pill, actions }: PageHeaderProps) 
     </header>
   );
 }
+
