@@ -1,10 +1,12 @@
 // src/context/AuthContext.tsx
-import { useState, ReactNode } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { loginRequest } from '@/api/authService';
 import { AuthContext } from './authContextCore';
+import type { AuthState } from './types';
 
 // ⚠️ Pon esto en false cuando conectes el backend real
-const DESIGN_MODE = true;
+const DESIGN_MODE = false;
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AuthState>(() => {
@@ -65,13 +67,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Región real cuando conectes backend
     const data = await loginRequest(email, password);
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    // Guardar sólo si vienen valores válidos
+    if (data.accessToken) {
+      localStorage.setItem('accessToken', data.accessToken);
+    }
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
 
     setState({
-      token: data.accessToken,
-      user: data.user,
-      isAuthenticated: true,
+      token: data.accessToken ?? null,
+      user: data.user
+        ? {
+            id: data.user.id,
+            name: data.user.name || data.user.email || 'Usuario',
+            email: data.user.email || '',
+            role: (data.user.role as any) || 'USER',
+          }
+        : null,
+      isAuthenticated: Boolean(data.accessToken || data.user),
     });
   };
 
