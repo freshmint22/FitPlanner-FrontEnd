@@ -175,11 +175,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-4 text-[11px] text-center text-slate-500">
-            Tip: más adelante podremos usar usuarios de prueba como{" "}
-            <span className="font-semibold text-slate-300">
-              admin@fitplanner.com
-            </span>{" "}
-            para acceso de administrador.
+            Tip: usa "admin@gym.com" para acceso de administrador
           </p>
         </div>
       </div>

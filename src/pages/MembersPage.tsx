@@ -1,6 +1,7 @@
 // src/pages/MembersPage.tsx
 import { useEffect, useState } from 'react';
-import membersService, { MemberDto } from '@/api/membersService';
+import membersService from '@/api/membersService';
+import type { MemberDto } from '@/api/membersService';
 
 const MembersPage = () => {
   const [members, setMembers] = useState<MemberDto[]>([]);
