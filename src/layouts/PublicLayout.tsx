@@ -40,19 +40,6 @@ export default function PublicLayout() {
 
             {/* Acciones derecha */}
             <nav className="flex items-center gap-3 text-xs font-semibold">
-              {/* Inicio */}
-              <Link
-                to="/"
-                className={[
-                  'btn-raise rounded-2xl px-4 py-2 border',
-                  isHome
-                    ? 'border-slate-100 bg-slate-100 text-slate-900'
-                    : 'border-slate-700/80 bg-slate-950/60 text-slate-100 hover:bg-slate-900',
-                ].join(' ')}
-              >
-                Inicio
-              </Link>
-
               {/* Iniciar sesión */}
               <Link
                 to="/login"

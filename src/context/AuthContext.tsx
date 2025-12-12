@@ -8,6 +8,13 @@ import type { AuthState } from './types';
 // ⚠️ Pon esto en false cuando conectes el backend real
 const DESIGN_MODE = false;
 
+// Enforce role by email domain: @gym.com => ADMIN, otherwise USER
+function deriveRoleFromEmail(email?: string, hintedRole?: 'ADMIN' | 'USER' | string | null): 'ADMIN' | 'USER' {
+  const e = (email || '').toLowerCase().trim();
+  if (e.endsWith('@gym.com')) return 'ADMIN';
+  return 'USER';
+}
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AuthState>(() => {
     if (DESIGN_MODE) {
@@ -28,11 +35,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
-        const user = localStorage.getItem('user');
-        if (token && user) {
+        const userStr = localStorage.getItem('user');
+        if (token && userStr) {
+          const parsed = JSON.parse(userStr);
           return {
             token,
-            user: JSON.parse(user),
+            user: parsed
+              ? {
+                  id: parsed.id,
+                  name: parsed.name || parsed.email || 'Usuario',
+                  email: parsed.email || '',
+                  role: deriveRoleFromEmail(parsed.email, parsed.role),
+                }
+              : null,
             isAuthenticated: true,
           };
         }
@@ -82,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: data.user.id,
             name: data.user.name || data.user.email || 'Usuario',
             email: data.user.email || '',
-            role: (data.user.role as any) || 'USER',
+            role: deriveRoleFromEmail(data.user.email, (data.user.role as any) ?? null),
           }
         : null,
       isAuthenticated: Boolean(data.accessToken || data.user),

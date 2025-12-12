@@ -1,5 +1,5 @@
 // src/components/ui/DataListItem.tsx
-import { ReactNode } from "react";
+import type { ReactNode } from "react";
 
 interface DataListItemProps {
   title: string;
