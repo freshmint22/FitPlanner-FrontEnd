@@ -17,10 +17,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-          cache: 'npm'
 
       - name: Install dependencies
-        working-directory: Frontend
         run: npm ci
 
       - name: Show Node & npm versions
@@ -29,11 +27,9 @@ jobs:
           npm -v
 
       - name: Lint code
-        working-directory: Frontend
         run: npm run lint
 
       - name: Run tests
-        working-directory: Frontend
         run: npm run test
         env:
           CI: true
@@ -46,7 +42,6 @@ jobs:
           name: codecov-umbrella
 
       - name: Build project
-        working-directory: Frontend
         run: npm run build
 
       - name: Upload build artifact

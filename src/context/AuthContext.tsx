@@ -1,10 +1,19 @@
 // src/context/AuthContext.tsx
-import { useState, ReactNode } from 'react';
+import { useState } from 'react';
+import type { ReactNode } from 'react';
 import { loginRequest } from '@/api/authService';
 import { AuthContext } from './authContextCore';
+import type { AuthState } from './types';
 
 // ⚠️ Pon esto en false cuando conectes el backend real
-const DESIGN_MODE = true;
+const DESIGN_MODE = false;
+
+// Enforce role by email domain: @gym.com => ADMIN, otherwise USER
+function deriveRoleFromEmail(email?: string): 'ADMIN' | 'USER' {
+  const e = (email || '').toLowerCase().trim();
+  if (e.endsWith('@gym.com')) return 'ADMIN';
+  return 'USER';
+}
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AuthState>(() => {
@@ -26,11 +35,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       if (typeof window !== 'undefined') {
         const token = localStorage.getItem('accessToken');
-        const user = localStorage.getItem('user');
-        if (token && user) {
+        const userStr = localStorage.getItem('user');
+        if (token && userStr) {
+          const parsed = JSON.parse(userStr);
           return {
             token,
-            user: JSON.parse(user),
+            user: parsed
+              ? {
+                  id: parsed.id,
+                  name: parsed.name || parsed.email || 'Usuario',
+                  email: parsed.email || '',
+                  role: deriveRoleFromEmail(parsed.email),
+                }
+              : null,
             isAuthenticated: true,
           };
         }
@@ -65,13 +82,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Región real cuando conectes backend
     const data = await loginRequest(email, password);
-    localStorage.setItem('accessToken', data.accessToken);
-    localStorage.setItem('user', JSON.stringify(data.user));
+    // Guardar sólo si vienen valores válidos
+    if (data.accessToken) {
+      localStorage.setItem('accessToken', data.accessToken);
+    }
+    if (data.user) {
+      localStorage.setItem('user', JSON.stringify(data.user));
+    }
 
     setState({
-      token: data.accessToken,
-      user: data.user,
-      isAuthenticated: true,
+      token: data.accessToken ?? null,
+      user: data.user
+        ? {
+            id: data.user.id,
+            name: data.user.name || data.user.email || 'Usuario',
+            email: data.user.email || '',
+            role: deriveRoleFromEmail(data.user.email),
+          }
+        : null,
+      isAuthenticated: Boolean(data.accessToken || data.user),
     });
   };
 
