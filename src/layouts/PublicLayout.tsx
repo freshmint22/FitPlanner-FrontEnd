@@ -15,8 +15,6 @@ export default function PublicLayout() {
     location.pathname.startsWith(path),
   );
 
-  const isHome = location.pathname === '/';
-
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col">
       {/* NAVBAR SOLO PARA RUTAS PÚBLICAS NORMALES (NO AUTH) */}

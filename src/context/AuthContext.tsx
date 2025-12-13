@@ -9,7 +9,7 @@ import type { AuthState } from './types';
 const DESIGN_MODE = false;
 
 // Enforce role by email domain: @gym.com => ADMIN, otherwise USER
-function deriveRoleFromEmail(email?: string, hintedRole?: 'ADMIN' | 'USER' | string | null): 'ADMIN' | 'USER' {
+function deriveRoleFromEmail(email?: string): 'ADMIN' | 'USER' {
   const e = (email || '').toLowerCase().trim();
   if (e.endsWith('@gym.com')) return 'ADMIN';
   return 'USER';
@@ -45,7 +45,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                   id: parsed.id,
                   name: parsed.name || parsed.email || 'Usuario',
                   email: parsed.email || '',
-                  role: deriveRoleFromEmail(parsed.email, parsed.role),
+                  role: deriveRoleFromEmail(parsed.email),
                 }
               : null,
             isAuthenticated: true,
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: data.user.id,
             name: data.user.name || data.user.email || 'Usuario',
             email: data.user.email || '',
-            role: deriveRoleFromEmail(data.user.email, (data.user.role as any) ?? null),
+            role: deriveRoleFromEmail(data.user.email),
           }
         : null,
       isAuthenticated: Boolean(data.accessToken || data.user),

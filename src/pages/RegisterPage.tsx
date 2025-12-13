@@ -260,11 +260,13 @@ const RegisterPage = () => {
                   {showPassword ? "Ocultar" : "Mostrar"}
                 </button>
               </div>
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-slate-200 mb-1"
-                >
-                  Confirmar contraseña
-                </label>
+
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-slate-200 mb-1"
+              >
+                Confirmar contraseña
+              </label>
                 <div className="relative">
                   <input
                     id="confirmPassword"

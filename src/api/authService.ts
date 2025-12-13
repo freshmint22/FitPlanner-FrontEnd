@@ -21,7 +21,8 @@ export const loginRequest = async (email: string, password: string) => {
   });
 
   // Some backends return { token } or { accessToken }. Normalize to accessToken.
-  const accessToken = (data as any).accessToken || (data as any).token;
+  const normalizedData = data as LoginResponse & { token?: string };
+  const accessToken = normalizedData.accessToken || normalizedData.token;
 
   // If server returned user info, use it; otherwise try to fetch profile endpoint.
   let user = data.user;

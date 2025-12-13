@@ -186,7 +186,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-4 text-[11px] text-center text-slate-500">
-            Tip: usa "admin@gym.com" para acceso de administrador
+            Tip: usa &quot;admin@gym.com&quot; para acceso de administrador
           </p>
         </div>
       </div>
