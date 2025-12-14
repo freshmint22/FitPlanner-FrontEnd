@@ -150,6 +150,19 @@ const ClassesPage = () => {
                       className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
                     >
                       Editar
+                    </button>
+                  )}
+                  {user?.role !== 'ADMIN' && (
+                    <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+                      Reservar
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
 
       {/* Modal de edición (solo admin) */}
       {user?.role === 'ADMIN' && (
@@ -173,19 +186,6 @@ const ClassesPage = () => {
           }}
         />
       )}
-                    </button>
-                  )}
-                  {user?.role !== 'ADMIN' && (
-                    <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
-                      Reservar
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </div>
     </div>
   );
 };

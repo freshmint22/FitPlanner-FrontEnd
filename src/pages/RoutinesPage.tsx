@@ -19,7 +19,7 @@ const RoutinesPage = () => {
     const fetchRoutines = async () => {
       try {
         const res = await axiosClient.get('/routines').catch(() => ({ data: [] }));
-        setRoutines((res.data || []).map((r: Record<string, unknown>, idx: number) => (
+        setRoutines((res.data || []).map((r: Record<string, unknown>, idx: number) => ({
           _id: r._id || idx,
           name: r.name || 'Rutina sin nombre',
           frequency: r.frequency || 'Frecuencia no especificada',
