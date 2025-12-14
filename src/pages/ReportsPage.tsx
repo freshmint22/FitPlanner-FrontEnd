@@ -1,5 +1,40 @@
 // src/pages/ReportsPage.tsx
+import { useEffect, useState } from 'react';
+import { axiosClient } from '@/api/axiosClient';
+
+interface Reports {
+  ingresos: string;
+  nuevosMiembros: number;
+  retencion: string;
+}
+
 const ReportsPage = () => {
+  const [reports, setReports] = useState<Reports>({
+    ingresos: '$0',
+    nuevosMiembros: 0,
+    retencion: '0%'
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchReports = async () => {
+      try {
+        const res = await axiosClient.get('/reports/dashboard-kpis');
+        setReports({
+          ingresos: res.data.ingresosMes || '$0',
+          nuevosMiembros: res.data.nuevosMiembros || 0,
+          retencion: res.data.retencion || '0%'
+        });
+      } catch (error) {
+        console.error('Error fetching reports:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchReports();
+  }, []);
+
   return (
     <div className="min-h-full bg-white pb-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 pt-6 space-y-6">
@@ -9,7 +44,7 @@ const ReportsPage = () => {
               Ingresos este mes
             </p>
             <p className="mt-2 text-2xl font-semibold text-emerald-600 dark:text-emerald-400">
-              $18.450.000
+              {isLoading ? '...' : reports.ingresos}
             </p>
             <p className="mt-1 text-xs text-slate-500">
               Crecimiento del 12% vs mes anterior.
@@ -19,7 +54,9 @@ const ReportsPage = () => {
             <p className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Nuevos miembros
             </p>
-            <p className="mt-2 text-2xl font-semibold text-blue-600 dark:text-blue-400">34</p>
+            <p className="mt-2 text-2xl font-semibold text-blue-600 dark:text-blue-400">
+              {isLoading ? '...' : reports.nuevosMiembros}
+            </p>
             <p className="mt-1 text-xs text-slate-500">
               Registrados en los últimos 30 días.
             </p>
@@ -28,7 +65,9 @@ const ReportsPage = () => {
             <p className="text-[11px] uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Retención
             </p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">86%</p>
+            <p className="mt-2 text-2xl font-semibold text-slate-900 dark:text-slate-50">
+              {isLoading ? '...' : reports.retencion}
+            </p>
             <p className="mt-1 text-xs text-slate-500">
               Miembros que mantienen su plan.
             </p>

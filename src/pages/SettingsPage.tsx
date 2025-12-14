@@ -93,7 +93,7 @@ export default function SettingsPage() {
             if (!user?.id) return;
 
             const formData = new FormData(e.currentTarget);
-            const payload = {
+            const payload: any = {
               firstName: formData.get("firstName") as string,
               lastName: formData.get("lastName") as string,
               email: formData.get("email") as string,
@@ -102,11 +102,36 @@ export default function SettingsPage() {
               gender: formData.get("gender") as string,
             };
 
+            // Filtrar valores vacíos
+            Object.keys(payload).forEach(key => {
+              if (!payload[key]) delete payload[key];
+            });
+
+            console.log("📤 Enviando datos de perfil:", payload);
+
             try {
-              await updateProfileRequest(user.id, payload);
-              alert("Perfil actualizado exitosamente");
+              const result = await updateProfileRequest(user.id, payload);
+              console.log("✅ Respuesta del servidor:", result);
+              
+              // Actualizar el contexto con los nuevos datos
+              const updatedUser = {
+                ...user,
+                name: `${payload.firstName || firstName} ${payload.lastName || lastName}`.trim(),
+                email: payload.email || email,
+                phone: payload.phone || phone,
+                birthDate: payload.birthDate || birthDate,
+                gender: payload.gender || gender,
+              };
+              
+              // Guardar en localStorage para persistencia
+              localStorage.setItem("user", JSON.stringify(updatedUser));
+              
+              // Recargar la página para actualizar el contexto
+              window.location.reload();
+              
             } catch (error) {
-              alert("Error al actualizar el perfil");
+              console.error("❌ Error al actualizar:", error);
+              alert(`Error al actualizar el perfil: ${error instanceof Error ? error.message : "Error desconocido"}`);
             }
           }}>
             <div className="grid gap-4 md:grid-cols-2">

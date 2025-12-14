@@ -1,4 +1,7 @@
 // src/pages/MembershipsPage.tsx
+import { useEffect, useState } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { axiosClient } from '@/api/axiosClient';
 
 type Plan = {
   id: number;
@@ -17,84 +20,136 @@ type Payment = {
   status: "Pagado" | "Pendiente";
 };
 
-const currentPlan = {
-  name: "Plan Premium",
-  price: "$150.000 / mes",
-  daysLeft: 15,
-  totalDays: 30,
-  nextPayment: "01/04/2024",
-  paymentMethod: "•••• 4242",
-  status: "Activo",
+type CurrentPlan = {
+  name: string;
+  price: string;
+  daysLeft: number;
+  totalDays: number;
+  nextPayment: string;
+  paymentMethod: string;
+  status: string;
 };
 
-const availablePlans: Plan[] = [
-  {
-    id: 1,
-    name: "Básico",
-    price: "$90.000 / mes",
-    description: "Acceso general al gimnasio.",
-    perks: [
-      "Acceso a zona de pesas",
-      "Acceso a máquinas cardiovasculares",
-      "Horario de 6:00 a 22:00",
-      "1 rutina personalizada al mes",
-    ],
-  },
-  {
-    id: 2,
-    name: "Premium",
-    price: "$150.000 / mes",
-    description: "Plan más popular para usuarios frecuentes.",
-    perks: [
-      "Todo lo incluido en Básico",
-      "Acceso a todas las clases grupales",
-      "Acceso 24/7",
-      "2 rutinas personalizadas al mes",
-      "Evaluación física mensual",
-    ],
-    tag: "Actual",
-  },
-  {
-    id: 3,
-    name: "Elite",
-    price: "$240.000 / mes",
-    description: "Experiencia completa de gimnasio.",
-    perks: [
-      "Todo lo incluido en Premium",
-      "Entrenador personal (2 sesiones/semana)",
-      "Acceso a spa y sauna",
-      "Plan nutricional personalizado",
-      "Descuento en productos del gimnasio",
-    ],
-    tag: "Popular",
-  },
-];
-
-const paymentsHistory: Payment[] = [
-  {
-    id: 1,
-    date: "01/02/2024",
-    invoice: "#INV-2024-002",
-    amount: "$150.000",
-    status: "Pagado",
-  },
-  {
-    id: 2,
-    date: "01/01/2024",
-    invoice: "#INV-2024-001",
-    amount: "$150.000",
-    status: "Pagado",
-  },
-  {
-    id: 3,
-    date: "01/12/2023",
-    invoice: "#INV-2023-012",
-    amount: "$150.000",
-    status: "Pagado",
-  },
-];
-
 const MembershipsPage = () => {
+  const { user } = useAuth();
+  const [currentPlan, setCurrentPlan] = useState<CurrentPlan>({
+    name: "Sin membresía",
+    price: "$0",
+    daysLeft: 0,
+    totalDays: 0,
+    nextPayment: "N/A",
+    paymentMethod: "N/A",
+    status: "Inactivo",
+  });
+  
+  const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
+  const [paymentsHistory, setPaymentsHistory] = useState<Payment[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        // Obtener membresía actual del usuario
+        if (user?.membership) {
+          const endDate = new Date(user.membership.endDate);
+          const today = new Date();
+          const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          
+          setCurrentPlan({
+            name: user.membership.name || "Sin plan",
+            price: `$${user.membership.price?.toLocaleString() || '0'} / mes`,
+            daysLeft: Math.max(0, daysLeft),
+            totalDays: user.membership.duration || 30,
+            nextPayment: endDate.toLocaleDateString(),
+            paymentMethod: "•••• ****",
+            status: daysLeft > 0 ? "Activo" : "Vencido",
+          });
+        }
+
+        // Obtener planes disponibles (desde API o usar defaults)
+        const plansRes = await axiosClient.get('/plans').catch(() => ({ data: [] }));
+        if (plansRes.data && plansRes.data.length > 0) {
+          setAvailablePlans(plansRes.data);
+        } else {
+          // Planes por defecto (coinciden con seed.ts)
+          setAvailablePlans([
+            {
+              id: 1,
+              name: "Plan Básico",
+              price: "$50.000 / mes",
+              description: "Acceso general al gimnasio por 30 días.",
+              perks: [
+                "Acceso a zona de pesas",
+                "Acceso a máquinas cardiovasculares",
+                "Horario de 6:00 a 22:00",
+                "1 rutina personalizada al mes",
+              ],
+            },
+            {
+              id: 2,
+              name: "Plan Premium",
+              price: "$80.000 / mes",
+              description: "Plan mensual más popular para usuarios frecuentes.",
+              perks: [
+                "Todo lo incluido en Básico",
+                "Acceso a todas las clases grupales",
+                "Acceso 24/7",
+                "2 rutinas personalizadas al mes",
+                "Evaluación física mensual",
+              ],
+              tag: user?.membership?.name === "Plan Premium" ? "Actual" : "Popular",
+            },
+            {
+              id: 3,
+              name: "Plan Semestral",
+              price: "$270.000",
+              description: "Paga 6 meses y ahorra (180 días de acceso).",
+              perks: [
+                "Todo lo incluido en Premium",
+                "Ahorro considerable vs plan mensual",
+                "Acceso por 6 meses completos",
+                "Evaluaciones trimestrales",
+              ],
+              tag: user?.membership?.name === "Plan Semestral" ? "Actual" : undefined,
+            },
+            {
+              id: 4,
+              name: "Plan Anual",
+              price: "$500.000",
+              description: "Mejor valor - 365 días de acceso completo.",
+              perks: [
+                "Todo lo incluido en Premium",
+                "Máximo ahorro anual",
+                "Acceso por 1 año completo",
+                "Plan nutricional personalizado",
+                "Entrenador personal (1 sesión/mes)",
+              ],
+              tag: user?.membership?.name === "Plan Anual" ? "Actual" : undefined,
+            },
+          ]);
+        }
+
+        // Obtener historial de pagos
+        const paymentsRes = await axiosClient.get('/payments').catch(() => ({ data: [] }));
+        if (paymentsRes.data && paymentsRes.data.length > 0) {
+          setPaymentsHistory(paymentsRes.data.map((p: any, idx: number) => ({
+            id: idx + 1,
+            date: new Date(p.date).toLocaleDateString(),
+            invoice: `#INV-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+            amount: `$${p.amount?.toLocaleString() || '0'}`,
+            status: "Pagado",
+          })));
+        }
+      } catch (error) {
+        console.error('Error fetching memberships data:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [user]);
+
   const progressPercent =
     (currentPlan.daysLeft / currentPlan.totalDays) * 100;
 

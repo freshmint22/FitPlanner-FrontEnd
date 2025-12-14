@@ -5,18 +5,44 @@ import { PageSection } from '@/components/ui/PageSection';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
+import { axiosClient } from '@/api/axiosClient';
+
+interface DashboardKPIs {
+  totalMiembros: number;
+  miembrosActivos: number;
+  clasesHoy: number;
+  ingresosMes: string;
+}
 
 export default function AdminDashboard() {
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
   const [isLoadingKpis, setIsLoadingKpis] = useState(true);
+  const [kpis, setKpis] = useState<DashboardKPIs>({
+    totalMiembros: 0,
+    miembrosActivos: 0,
+    clasesHoy: 0,
+    ingresosMes: '$0'
+  });
 
-  // Simulación de carga de KPIs
+  // Cargar KPIs reales del backend
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIsLoadingKpis(false);
-    }, 1200);
+    const fetchKPIs = async () => {
+      try {
+        const { data } = await axiosClient.get('/reports/dashboard-kpis');
+        setKpis({
+          totalMiembros: data.totalMiembros || 0,
+          miembrosActivos: data.miembrosActivos || 0,
+          clasesHoy: data.clasesHoy || 0,
+          ingresosMes: data.ingresosMes || '$0'
+        });
+      } catch (error) {
+        console.error('Error cargando KPIs:', error);
+      } finally {
+        setIsLoadingKpis(false);
+      }
+    };
 
-    return () => clearTimeout(timeout);
+    fetchKPIs();
   }, []);
 
   return (
@@ -41,32 +67,32 @@ export default function AdminDashboard() {
           }
         />
 
-        {/* KPIs con skeleton */}
+        {/* KPIs con datos reales */}
         <section className="grid gap-5 md:grid-cols-2 lg:grid-cols-4">
           <KpiCard
             label="Total de miembros"
-            value="248"
+            value={String(kpis.totalMiembros)}
             helperText="Miembros registrados en el sistema."
             icon="🧑‍🤝‍🧑"
             isLoading={isLoadingKpis}
           />
           <KpiCard
             label="Activos hoy"
-            value="63"
+            value={String(kpis.miembrosActivos)}
             helperText="Check-ins registrados en el día."
             icon="🏋️‍♂️"
             isLoading={isLoadingKpis}
           />
           <KpiCard
             label="Clases de hoy"
-            value="9"
+            value={String(kpis.clasesHoy)}
             helperText="Entre fuerza, cardio y funcional."
             icon="📅"
             isLoading={isLoadingKpis}
           />
           <KpiCard
             label="Ingresos del mes"
-            value="$18.450.000"
+            value={kpis.ingresosMes}
             helperText="Basado en membresías activas."
             trend="+12% vs mes anterior"
             icon="💰"

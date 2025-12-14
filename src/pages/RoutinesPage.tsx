@@ -1,29 +1,40 @@
 // src/pages/RoutinesPage.tsx
-const mockRoutines = [
-  {
-    id: 1,
-    name: "Definición y resistencia",
-    frequency: "4 días / semana",
-    focus: "Fuerza + core",
-    status: "Activa",
-  },
-  {
-    id: 2,
-    name: "Hipertrofia tren superior",
-    frequency: "3 días / semana",
-    focus: "Pecho, espalda, brazos",
-    status: "Activa",
-  },
-  {
-    id: 3,
-    name: "Inicio en el gym",
-    frequency: "2 días / semana",
-    focus: "Full body básico",
-    status: "Borrador",
-  },
-];
+import { useEffect, useState } from 'react';
+import { axiosClient } from '@/api/axiosClient';
+
+interface Routine {
+  _id?: string;
+  id?: number;
+  name: string;
+  frequency?: string;
+  focus?: string;
+  status: string;
+}
 
 const RoutinesPage = () => {
+  const [routines, setRoutines] = useState<Routine[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRoutines = async () => {
+      try {
+        const res = await axiosClient.get('/routines').catch(() => ({ data: [] }));
+        setRoutines((res.data || []).map((r: any, idx: number) => ({
+          _id: r._id || idx,
+          name: r.name || 'Rutina sin nombre',
+          frequency: r.frequency || 'Frecuencia no especificada',
+          focus: r.focus || 'Sin objetivo específico',
+          status: r.status || 'Activa'
+        })));
+      } catch (error) {
+        console.error('Error fetching routines:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchRoutines();
+  }, []);
   return (
     <div className="min-h-full bg-white pb-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 pt-6 space-y-6">
@@ -78,7 +89,12 @@ const RoutinesPage = () => {
           </div>
 
           <div className="space-y-3">
-            {mockRoutines.map((routine) => (
+            {isLoading ? (
+              <p className="text-center text-sm text-slate-400">Cargando rutinas...</p>
+            ) : routines.length === 0 ? (
+              <p className="text-center text-sm text-slate-400">No tienes rutinas creadas</p>
+            ) : (
+              routines.map((routine) => (
               <div
                 key={routine.id}
                 className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
@@ -101,7 +117,8 @@ const RoutinesPage = () => {
                   >
                     {routine.status}
                   </span>
-                  <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+              ))
+                 <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
                     Ver detalles
                   </button>
                 </div>
