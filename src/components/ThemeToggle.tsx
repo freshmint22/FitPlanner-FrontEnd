@@ -1,17 +1,19 @@
 import React from 'react';
 import { useTheme } from '../context/ThemeContext';
 
-export default function ThemeToggle({ size = 18 }: { size?: number }) {
+export default function ThemeToggle({ size = 18, floating = false }: { size?: number; floating?: boolean }) {
   const { theme, toggle } = useTheme();
 
   const isDark = theme === 'dark';
+  const baseBtn = "inline-flex items-center gap-2 rounded-full px-4 py-3 text-sm font-semibold border transition-all duration-200";
+  const themeBtn = "bg-white text-slate-800 border-slate-300 hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100 dark:hover:bg-slate-800";
+  const floatingWrap = "fixed bottom-6 right-6 z-50";
+  const floatingShadow = "shadow-2xl shadow-slate-900/40 dark:shadow-black/50 backdrop-blur bg-opacity-90";
 
-  return (
+  const btn = (
     <button
       onClick={toggle}
-      className="inline-flex items-center gap-2 rounded-2xl px-3 py-2 text-xs font-semibold border transition-colors
-                 bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200
-                 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-100 dark:hover:bg-slate-900"
+      className={[baseBtn, themeBtn, floating ? floatingShadow : "shadow"].join(" ")}
       aria-label={isDark ? 'Cambiar a modo día' : 'Cambiar a modo noche'}
     >
       {isDark ? (
@@ -34,4 +36,7 @@ export default function ThemeToggle({ size = 18 }: { size?: number }) {
       )}
     </button>
   );
+
+  if (!floating) return btn;
+  return <div className={floatingWrap}>{btn}</div>;
 }

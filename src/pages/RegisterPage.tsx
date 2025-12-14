@@ -71,9 +71,14 @@ const RegisterPage = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
-      setError(
-        "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
-      );
+      const apiError = (err as any)?.response?.data;
+      if (apiError?.code === "email_exists") {
+        setError("Correo ya registrado, intenta con uno nuevo.");
+      } else {
+        setError(
+          "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
+        );
+      }
     } finally {
       setLoading(false);
     }
