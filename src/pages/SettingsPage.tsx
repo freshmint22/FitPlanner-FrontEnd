@@ -1,15 +1,25 @@
 // src/pages/SettingsPage.tsx
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageSection } from "@/components/ui/PageSection";
 import { useAuth } from "@/context/useAuth";
+import { changePasswordRequest, deleteAccountRequest } from "@/api/authService";
 
 export default function SettingsPage() {
-  // Por ahora todo es estático / maqueta. Luego lo conectas al backend.
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [deleteError, setDeleteError] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const memberSince = "Enero 2024";
   const fullName = user?.name?.trim() ?? "";
   const [firstName = "", ...restName] = fullName.split(/\s+/).filter(Boolean);
@@ -204,7 +214,49 @@ export default function SettingsPage() {
             Actualiza tu contraseña para mantener tu cuenta segura.
           </p>
 
-          <form className="mt-5 space-y-4">
+          <form className="mt-5 space-y-4" onSubmit={async (e) => {
+            e.preventDefault();
+            setPasswordError("");
+            setPasswordSuccess("");
+
+            if (!currentPassword || !newPassword || !confirmPassword) {
+              setPasswordError("Todos los campos son requeridos");
+              return;
+            }
+
+            if (newPassword !== confirmPassword) {
+              setPasswordError("Las contraseñas nuevas no coinciden");
+              return;
+            }
+
+            if (newPassword.length < 8) {
+              setPasswordError("La nueva contraseña debe tener mínimo 8 caracteres");
+              return;
+            }
+
+            try {
+              setIsChangingPassword(true);
+              await changePasswordRequest({ currentPassword, newPassword });
+              setPasswordSuccess("Contraseña actualizada exitosamente");
+              setCurrentPassword("");
+              setNewPassword("");
+              setConfirmPassword("");
+            } catch (error: any) {
+              setPasswordError(error.response?.data?.message || "Error al cambiar la contraseña");
+            } finally {
+              setIsChangingPassword(false);
+            }
+          }}>
+            {passwordError && (
+              <div className="rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                {passwordError}
+              </div>
+            )}
+            {passwordSuccess && (
+              <div className="rounded-xl bg-emerald-50 px-4 py-3 text-sm text-emerald-600 dark:bg-emerald-950/30 dark:text-emerald-400">
+                {passwordSuccess}
+              </div>
+            )}
             <div>
               <label
                 htmlFor="currentPassword"
@@ -216,7 +268,9 @@ export default function SettingsPage() {
                 <input
                   id="currentPassword"
                   type={showPassword ? "text" : "password"}
-                  defaultValue="password123"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Ingresa tu contraseña actual"
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <button
@@ -248,6 +302,8 @@ export default function SettingsPage() {
               <input
                 id="newPassword"
                 type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
                 placeholder="Ingresa tu nueva contraseña"
                 className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
@@ -263,6 +319,8 @@ export default function SettingsPage() {
               <input
                 id="confirmPassword"
                 type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="Confirma tu nueva contraseña"
                 className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
@@ -270,10 +328,11 @@ export default function SettingsPage() {
 
             <div className="mt-4 flex justify-end">
               <button
-                type="button"
-                className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
+                type="submit"
+                disabled={isChangingPassword}
+                className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
-                Actualizar contraseña
+                {isChangingPassword ? "Actualizando..." : "Actualizar contraseña"}
               </button>
             </div>
           </form>
@@ -345,7 +404,7 @@ export default function SettingsPage() {
 
       {/* Modal de confirmación de eliminación */}
       {showDeleteModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
           <div className="mx-4 w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
             <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
               ¿Estás seguro?
@@ -353,6 +412,12 @@ export default function SettingsPage() {
             <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Esta acción es irreversible. Para confirmar la eliminación de tu cuenta, escribe <strong>ELIMINAR</strong> en el campo a continuación.
             </p>
+
+            {deleteError && (
+              <div className="mt-4 rounded-xl bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/30 dark:text-red-400">
+                {deleteError}
+              </div>
+            )}
 
             <input
               type="text"
@@ -368,23 +433,34 @@ export default function SettingsPage() {
                 onClick={() => {
                   setShowDeleteModal(false);
                   setDeleteConfirmText("");
+                  setDeleteError("");
                 }}
-                className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+                disabled={isDeletingAccount}
+                className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
               >
                 Cancelar
               </button>
               <button
                 type="button"
-                disabled={deleteConfirmText !== "ELIMINAR"}
-                onClick={() => {
-                  // Aquí va la lógica de eliminación
-                  console.log("Cuenta eliminada");
-                  setShowDeleteModal(false);
-                  setDeleteConfirmText("");
+                disabled={deleteConfirmText !== "ELIMINAR" || isDeletingAccount}
+                onClick={async () => {
+                  try {
+                    setIsDeletingAccount(true);
+                    setDeleteError("");
+                    await deleteAccountRequest();
+                    setShowDeleteModal(false);
+                    setDeleteConfirmText("");
+                    logout();
+                    navigate("/login");
+                  } catch (error: any) {
+                    setDeleteError(error.response?.data?.message || "Error al eliminar la cuenta");
+                  } finally {
+                    setIsDeletingAccount(false);
+                  }
                 }}
                 className="flex-1 rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-red-600"
               >
-                Eliminar cuenta
+                {isDeletingAccount ? "Eliminando..." : "Eliminar cuenta"}
               </button>
             </div>
           </div>

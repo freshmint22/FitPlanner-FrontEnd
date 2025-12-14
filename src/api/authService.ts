@@ -68,3 +68,19 @@ export const registerRequest = async (
   );
   return data;
 };
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const changePasswordRequest = async (
+  payload: ChangePasswordPayload
+): Promise<{ message: string }> => {
+  const { data } = await axiosClient.patch("/users/password", payload);
+  return data;
+};
+
+export const deleteAccountRequest = async (): Promise<{ message: string }> => {
+  const { data } = await axiosClient.delete("/users/account");
+  return data;
+};

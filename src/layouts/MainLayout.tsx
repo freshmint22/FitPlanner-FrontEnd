@@ -177,33 +177,35 @@ function Sidebar({ onClose, isMobile = false, className = "", isCollapsed = fals
           </div>
         </nav>
 
-        <div className="border-t border-slate-200 px-4 py-4 dark:border-slate-800/70">
-          <div className="rounded-2xl bg-slate-100 px-4 py-3 shadow-inner shadow-slate-200/60 dark:bg-slate-900/80 dark:shadow-inner">
-            <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-white dark:text-slate-50">
-                {user?.name?.[0]?.toUpperCase() ?? "U"}
+        {!isCollapsed && (
+          <div className="border-t border-slate-200 px-4 py-4 dark:border-slate-800/70">
+            <div className="rounded-2xl bg-slate-100 px-4 py-3 shadow-inner shadow-slate-200/60 dark:bg-slate-900/80 dark:shadow-inner">
+              <div className="mb-2 flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-white dark:text-slate-50">
+                  {user?.name?.[0]?.toUpperCase() ?? "U"}
+                </div>
+                <div className="leading-tight">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    {user?.role === "ADMIN" ? "Administrador" : "Usuario"}
+                  </p>
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {user?.name ?? "Sesión activa"}
+                  </p>
+                  {user?.email && (
+                    <p className="truncate text-[11px] text-slate-500 dark:text-slate-500">{user.email}</p>
+                  )}
+                </div>
               </div>
-              <div className="leading-tight">
-                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
-                  {user?.role === "ADMIN" ? "Administrador" : "Usuario"}
-                </p>
-                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                  {user?.name ?? "Sesión activa"}
-                </p>
-                {user?.email && (
-                  <p className="truncate text-[11px] text-slate-500 dark:text-slate-500">{user.email}</p>
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-rose-500 to-red-500 px-3 py-2 text-xs font-semibold text-white shadow hover:from-rose-400 hover:to-red-400"
+              >
+                Cerrar sesión
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleLogout}
-              className="mt-2 inline-flex w-full items-center justify-center rounded-2xl bg-gradient-to-r from-rose-500 to-red-500 px-3 py-2 text-xs font-semibold text-white shadow hover:from-rose-400 hover:to-red-400"
-            >
-              Cerrar sesión
-            </button>
           </div>
-        </div>
+        )}
       </div>
     </aside>
   );
