@@ -71,9 +71,12 @@ const RegisterPage = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
-      const apiError = (err as any)?.response?.data;
+      const axiosErr = err as any;
+      const apiError = axiosErr?.response?.data;
       if (apiError?.error?.code === "email_exists") {
         setError("Este correo ya existe. Intenta con uno diferente.");
+      } else if (!axiosErr?.response) {
+        setError("No se pudo conectar al servidor. Intenta más tarde.");
       } else {
         setError(
           "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
@@ -260,7 +263,7 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
                   >
                     {showPassword ? "Ocultar" : "Mostrar"}
                   </button>
@@ -287,7 +290,7 @@ const RegisterPage = () => {
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-300 dark:hover:text-slate-100"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
                   >
                     {showConfirmPassword ? "Ocultar" : "Mostrar"}
                   </button>
