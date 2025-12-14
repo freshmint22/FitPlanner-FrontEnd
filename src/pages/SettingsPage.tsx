@@ -18,11 +18,11 @@ export default function SettingsPage() {
       {/* Bloque superior: foto + información personal */}
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,2fr)]">
         {/* Foto de perfil */}
-        <section className="rounded-3xl border border-slate-800 bg-slate-950/80 px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
-          <h2 className="text-sm font-semibold text-slate-100">
+        <section className="rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             Foto de perfil
           </h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Gestiona la foto asociada a tu cuenta de FitPlanner.
           </p>
 
@@ -31,24 +31,24 @@ export default function SettingsPage() {
               AD
               <button
                 type="button"
-                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-slate-950/90 text-xs font-bold text-slate-100 shadow-md border border-slate-800"
+                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-800 shadow-md border border-slate-300 dark:bg-slate-950/90 dark:text-slate-100 dark:border-slate-800"
               >
                 📷
               </button>
             </div>
 
             <div className="text-center">
-              <p className="text-sm font-semibold text-slate-100">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                 Administrador
               </p>
-              <p className="text-xs text-slate-400">
+              <p className="text-xs text-slate-600 dark:text-slate-400">
                 Miembro desde {memberSince}
               </p>
             </div>
 
             <button
               type="button"
-              className="mt-2 text-xs font-semibold text-sky-400 hover:text-sky-300"
+              className="mt-2 text-xs font-semibold text-sky-600 hover:text-sky-500 dark:text-sky-400 dark:hover:text-sky-300"
             >
               Cambiar foto de perfil
             </button>
@@ -56,11 +56,11 @@ export default function SettingsPage() {
         </section>
 
         {/* Información personal */}
-        <section className="rounded-3xl border border-slate-800 bg-slate-950/80 px-6 py-6 shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
-          <h2 className="text-sm font-semibold text-slate-100">
+        <section className="rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
             Información personal
           </h2>
-          <p className="mt-1 text-xs text-slate-400">
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
             Actualiza tus datos personales para mantener tu perfil al día.
           </p>
 
@@ -77,7 +77,7 @@ export default function SettingsPage() {
                   id="firstName"
                   type="text"
                   defaultValue="Juan"
-                  className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
 
@@ -92,7 +92,7 @@ export default function SettingsPage() {
                   id="lastName"
                   type="text"
                   defaultValue="Díaz"
-                  className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
             </div>
@@ -108,7 +108,7 @@ export default function SettingsPage() {
                 id="email"
                 type="email"
                 defaultValue="juan.diaz@email.com"
-                className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
             </div>
 
@@ -123,7 +123,7 @@ export default function SettingsPage() {
                 id="phone"
                 type="tel"
                 defaultValue="+57 300 123 4567"
-                className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
             </div>
 
@@ -139,7 +139,7 @@ export default function SettingsPage() {
                   id="birthDate"
                   type="date"
                   defaultValue="1990-05-15"
-                  className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
 
@@ -153,7 +153,7 @@ export default function SettingsPage() {
                 <select
                   id="gender"
                   defaultValue="masculino"
-                  className="h-10 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 text-sm text-slate-50 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:ring-sky-500/30"
                 >
                   <option value="masculino">Masculino</option>
                   <option value="femenino">Femenino</option>
@@ -165,7 +165,7 @@ export default function SettingsPage() {
             <div className="mt-4 flex justify-end">
               <button
                 type="button"
-                className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-500 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-400"
+                className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
                 Guardar cambios
               </button>
@@ -179,35 +179,35 @@ export default function SettingsPage() {
         title="Información de membresía"
         description="Detalles de tu plan actual en el gimnasio."
       >
-        <div className="rounded-3xl border border-slate-800 bg-slate-950/80 px-6 py-5 text-sm text-slate-100">
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100">
           <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
               Plan actual
             </p>
-            <p className="mt-1 text-lg font-semibold text-slate-50">
+            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
               Premium Mensual
             </p>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
               Acceso completo a todas las áreas del gimnasio y clases grupales.
             </p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-4 text-xs">
             <div>
-              <p className="text-slate-400">Estado</p>
+              <p className="text-slate-600 dark:text-slate-400">Estado</p>
               <p className="mt-1 font-semibold text-emerald-400">Activo</p>
             </div>
             <div>
               <p className="text-slate-400">Fecha de inicio</p>
-              <p className="mt-1 font-semibold text-slate-100">01 / 01 / 2024</p>
+              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 01 / 2024</p>
             </div>
             <div>
               <p className="text-slate-400">Renovación</p>
-              <p className="mt-1 font-semibold text-slate-100">01 / 04 / 2024</p>
+              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 04 / 2024</p>
             </div>
             <div>
               <p className="text-slate-400">Próximo cobro</p>
-              <p className="mt-1 font-semibold text-slate-100">
+              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
                 $120.000 COP
               </p>
             </div>

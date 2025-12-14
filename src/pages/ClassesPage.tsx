@@ -31,11 +31,11 @@ const mockClasses = [
 
 const ClassesPage = () => {
   return (
-    <div className="min-h-full bg-slate-950 pb-10">
+    <div className="min-h-full bg-white pb-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="mx-auto max-w-6xl px-4 pt-6 space-y-6">
         {/* Resumen rápido */}
         <section className="grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
             <p className="text-[11px] uppercase tracking-wide text-slate-400">
               Clases de hoy
             </p>
@@ -44,7 +44,7 @@ const ClassesPage = () => {
               Entre fuerza, cardio y funcional.
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
             <p className="text-[11px] uppercase tracking-wide text-slate-400">
               Ocupación promedio
             </p>
@@ -56,7 +56,7 @@ const ClassesPage = () => {
               Basado en reservas vs cupos disponibles.
             </p>
           </div>
-          <div className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
             <p className="text-[11px] uppercase tracking-wide text-slate-400">
               Próxima clase
             </p>
@@ -68,7 +68,7 @@ const ClassesPage = () => {
         </section>
 
         {/* Listado de clases */}
-        <section className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-slate-50">
@@ -79,7 +79,7 @@ const ClassesPage = () => {
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="rounded-lg border border-slate-700 bg-slate-950 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-900">
+              <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900">
                 Ver calendario
               </button>
               <button className="rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
@@ -92,7 +92,7 @@ const ClassesPage = () => {
             {mockClasses.map((cls) => (
               <div
                 key={cls.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-800 bg-slate-950 px-3 py-3"
+                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
               >
                 <div>
                   <p className="text-sm font-semibold text-slate-50">
@@ -114,7 +114,7 @@ const ClassesPage = () => {
                     <p className="text-[11px] text-slate-500">Cupos</p>
                     <p className="font-semibold">{cls.spots}</p>
                   </div>
-                  <button className="rounded-lg border border-slate-700 bg-slate-900 px-3 py-1.5 text-xs text-slate-100 hover:bg-slate-800">
+                  <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
                     Ver detalles
                   </button>
                 </div>

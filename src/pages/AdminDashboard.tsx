@@ -29,7 +29,7 @@ export default function AdminDashboard() {
           actions={
             <>
               <button
-                className="btn-raise rounded-2xl border border-slate-700/80 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-slate-100 shadow hover:bg-slate-900"
+                className="btn-raise rounded-2xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:bg-slate-900"
                 onClick={() => setIsCalendarOpen(true)}
               >
                 Ver calendario completo
@@ -116,7 +116,7 @@ export default function AdminDashboard() {
                 ].map((cls) => (
                   <div
                     key={cls.name}
-                    className="flex items-center justify-between rounded-2xl bg-slate-900/80 px-4 py-3 text-sm text-slate-100"
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100"
                   >
                     <div className="space-y-1">
                       <p className="font-semibold">{cls.name}</p>
@@ -126,12 +126,12 @@ export default function AdminDashboard() {
                           {cls.trainer}
                         </span>
                       </p>
-                      <span className="inline-flex rounded-full bg-slate-800/90 px-2 py-0.5 text-[10px] font-semibold text-slate-300">
+                      <span className="inline-flex rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700 dark:bg-slate-800/90 dark:text-slate-300">
                         {cls.tag}
                       </span>
                     </div>
                     <div className="text-right">
-                      <p className="text-[11px] text-slate-400">Ocupación</p>
+                      <p className="text-[11px] text-slate-600 dark:text-slate-400">Ocupación</p>
                       <p className={`text-sm font-semibold ${cls.color}`}>
                         {cls.occupancy}
                       </p>
@@ -146,33 +146,33 @@ export default function AdminDashboard() {
               description="Desglose de ventas por plan en el mes actual."
             >
               <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
-                  <p className="text-xs font-medium text-slate-400">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Mensual Premium
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-50">
+                  <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
                     $9.200.000
                   </p>
                   <p className="mt-1 text-[11px] text-emerald-400">
                     +6% vs mes anterior
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
-                  <p className="text-xs font-medium text-slate-400">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Mensual
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-50">
+                  <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
                     $5.800.000
                   </p>
                   <p className="mt-1 text-[11px] text-slate-400">
                     Estable respecto al mes pasado
                   </p>
                 </div>
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
-                  <p className="text-xs font-medium text-slate-400">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Trimestral
                   </p>
-                  <p className="mt-1 text-lg font-semibold text-slate-50">
+                  <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
                     $3.450.000
                   </p>
                   <p className="mt-1 text-[11px] text-emerald-400">
@@ -189,44 +189,44 @@ export default function AdminDashboard() {
               title="Próximas renovaciones"
               description="Membresías que vencen en los próximos días."
             >
-              <div className="space-y-3 text-sm text-slate-100">
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
+              <div className="space-y-3 text-sm text-slate-900 dark:text-slate-100">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">Ana Torres</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Ana Torres</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         Plan Mensual Premium · Vence el 30 / 11 / 2025
                       </p>
                     </div>
-                    <span className="rounded-full bg-amber-500/10 px-2 py-0.5 text-[10px] font-semibold text-amber-300">
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
                       2 días
                     </span>
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">Juan Pérez</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Juan Pérez</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         Plan Trimestral · Vence el 05 / 12 / 2025
                       </p>
                     </div>
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                    <span className="rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300">
                       1 semana
                     </span>
                   </div>
                 </div>
 
-                <div className="rounded-2xl bg-slate-900/80 px-4 py-3">
+                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="font-semibold">Carlos López</p>
-                      <p className="text-xs text-slate-400">
+                      <p className="font-semibold text-slate-900 dark:text-slate-100">Carlos López</p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
                         Plan Mensual · Venció hoy
                       </p>
                     </div>
-                    <span className="rounded-full bg-rose-500/10 px-2 py-0.5 text-[10px] font-semibold text-rose-300">
+                    <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-300">
                       Vencida
                     </span>
                   </div>
@@ -262,7 +262,7 @@ export default function AdminDashboard() {
 
         <div className="mt-4 flex justify-end gap-2">
           <button
-            className="btn-raise rounded-2xl border border-slate-700/80 bg-slate-900/80 px-3 py-1.5 text-xs font-semibold text-slate-100"
+            className="btn-raise rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100"
             onClick={() => setIsCalendarOpen(false)}
           >
             Cerrar

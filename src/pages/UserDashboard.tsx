@@ -12,10 +12,10 @@ export default function UserDashboard() {
         subtitle="Revisa tu progreso, tu racha de entrenos y las próximas clases reservadas."
         actions={
           <>
-            <button className="btn-raise rounded-2xl border border-slate-700/80 bg-slate-950/70 px-4 py-2 text-xs font-semibold text-slate-100 shadow hover:bg-slate-900">
+            <button className="btn-raise rounded-2xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow hover:bg-slate-100 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:bg-slate-900">
               Ver calendario de clases
             </button>
-            <button className="btn-raise rounded-2xl bg-emerald-500 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-400">
+            <button className="btn-raise rounded-2xl bg-sky-600 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 dark:bg-emerald-500 dark:hover:bg-emerald-400">
               Actualizar objetivos
             </button>
           </>

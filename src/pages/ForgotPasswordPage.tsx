@@ -30,7 +30,7 @@ function ForgotPasswordPage() {
   };
 
   return (
-    <div className="page-fade-in min-h-screen flex items-center justify-center bg-slate-950 px-4">
+    <div className="page-fade-in min-h-screen flex items-center justify-center bg-slate-50 px-4 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       <div className="w-full max-w-md">
         {/* LOGO */}
         <div className="flex flex-col items-center mb-6">
@@ -46,7 +46,7 @@ function ForgotPasswordPage() {
         </div>
 
         {/* CARD */}
-        <div className="rounded-2xl bg-slate-900/80 border border-slate-800 p-6 sm:p-8 shadow-xl backdrop-blur">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-xl shadow-slate-200/80 backdrop-blur dark:border-slate-800 dark:bg-slate-900/80 dark:shadow-black/40">
           <div className="mb-4">
             <Link
               to="/login"
@@ -64,12 +64,12 @@ function ForgotPasswordPage() {
             )}
 
             <div>
-              <label className="block text-sm font-medium text-slate-200 mb-1">
+              <label className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200">
                 Correo electrónico
               </label>
               <input
                 type="email"
-                className="w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 text-sm text-slate-50 outline-none focus:ring-2 focus:ring-blue-500/30"
+                className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

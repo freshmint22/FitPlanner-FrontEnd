@@ -104,7 +104,7 @@ function Sidebar({ onClose, isMobile = false, className = "" }: SidebarProps) {
                       "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                       isActive
                         ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
                     ].join(" ")
                   }
                 >
@@ -129,7 +129,7 @@ function Sidebar({ onClose, isMobile = false, className = "" }: SidebarProps) {
                         "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                         isActive
                           ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
-                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                          : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
                       ].join(" ")
                     }
                   >
@@ -154,7 +154,7 @@ function Sidebar({ onClose, isMobile = false, className = "" }: SidebarProps) {
                       "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                       isActive
                         ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
-                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
                     ].join(" ")
                   }
                 >
