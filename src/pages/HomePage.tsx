@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 export default function HomePage() {
   return (
-    <div className="page-fade-in space-y-16 bg-white text-slate-900 dark:bg-[#020617] dark:text-slate-100">
+    <div className="page-fade-in space-y-16 bg-white text-slate-900 dark:bg-[#020617] dark:text-slate-100 shadow-2xl shadow-slate-200/50 dark:shadow-slate-950/50">
       {/* ====================== HERO ====================== */}
       <section className="relative flex flex-col lg:flex-row items-center gap-10 pt-6 pb-16 lg:pt-8 lg:pb-24">
         {/* Glow / fondo suave */}

@@ -72,8 +72,8 @@ const RegisterPage = () => {
     } catch (err) {
       console.error(err);
       const apiError = (err as any)?.response?.data;
-      if (apiError?.code === "email_exists") {
-        setError("Correo ya registrado, intenta con uno nuevo.");
+      if (apiError?.error?.code === "email_exists") {
+        setError("Este correo ya existe. Intenta con uno diferente.");
       } else {
         setError(
           "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."

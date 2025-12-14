@@ -39,9 +39,6 @@ export default function PublicLayout() {
 
             {/* Acciones derecha */}
             <nav className="flex items-center gap-3 text-xs font-semibold">
-              <ThemeToggle />
-              {/* Toggle tema */}
-              
               {/* Iniciar sesión */}
               <Link
                 to="/login"
