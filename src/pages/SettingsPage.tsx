@@ -93,7 +93,7 @@ export default function SettingsPage() {
             if (!user?.id) return;
 
             const formData = new FormData(e.currentTarget);
-            const payload: any = {
+            const payload: Record<string, string> = {
               firstName: formData.get("firstName") as string,
               lastName: formData.get("lastName") as string,
               email: formData.get("email") as string,
@@ -290,8 +290,9 @@ export default function SettingsPage() {
               setPasswordSuccess("Contraseña actualizada exitosamente");
               setNewPassword("");
               setConfirmPassword("");
-            } catch (error: any) {
-              setPasswordError(error.response?.data?.message || "Error al cambiar la contraseña");
+            } catch (error: unknown) {
+              const err = error as { response?: { data?: { message?: string } } };
+              setPasswordError(err.response?.data?.message || "Error al cambiar la contraseña");
             } finally {
               setIsChangingPassword(false);
             }
@@ -503,8 +504,9 @@ export default function SettingsPage() {
                     setDeleteConfirmText("");
                     logout();
                     navigate("/login");
-                  } catch (error: any) {
-                    setDeleteError(error.response?.data?.message || "Error al eliminar la cuenta");
+                  } catch (error: unknown) {
+                    const err = error as { response?: { data?: { message?: string } } };
+                    setDeleteError(err.response?.data?.message || "Error al eliminar la cuenta");
                   } finally {
                     setIsDeletingAccount(false);
                   }

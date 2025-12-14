@@ -44,7 +44,6 @@ const MembershipsPage = () => {
   
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
   const [paymentsHistory, setPaymentsHistory] = useState<Payment[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -132,18 +131,18 @@ const MembershipsPage = () => {
         // Obtener historial de pagos
         const paymentsRes = await axiosClient.get('/payments').catch(() => ({ data: [] }));
         if (paymentsRes.data && paymentsRes.data.length > 0) {
-          setPaymentsHistory(paymentsRes.data.map((p: any, idx: number) => ({
+          setPaymentsHistory(paymentsRes.data.map((p: Record<string, unknown>, idx: number) => ({
             id: idx + 1,
-            date: new Date(p.date).toLocaleDateString(),
-            invoice: `#INV-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
-            amount: `$${p.amount?.toLocaleString() || '0'}`,
+            date: new Date(p.date as string).toLocaleDateString(),
+            invoice: `#INV-${new Date(p.date as string).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+            amount: `$${(p.amount as number)?.toLocaleString() || '0'}`,
             status: "Pagado",
           })));
         }
       } catch (error) {
         console.error('Error fetching memberships data:', error);
       } finally {
-        setIsLoading(false);
+        // Loading complete
       }
     };
 

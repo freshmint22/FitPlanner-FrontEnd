@@ -71,7 +71,7 @@ const RegisterPage = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
-      const axiosErr = err as any;
+      const axiosErr = err as { response?: { data?: Record<string, unknown> } };
       const apiError = axiosErr?.response?.data;
       if (apiError?.error?.code === "email_exists") {
         setError("Este correo ya existe. Intenta con uno diferente.");

@@ -47,8 +47,9 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
       await axiosClient.put(`/members/${member.id}`, formData);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar el miembro');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al actualizar el miembro');
     } finally {
       setIsLoading(false);
     }
@@ -65,8 +66,9 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
       await axiosClient.delete(`/members/${member.id}`);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al eliminar el miembro');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al eliminar el miembro');
     } finally {
       setIsLoading(false);
     }

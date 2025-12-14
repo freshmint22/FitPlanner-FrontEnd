@@ -56,8 +56,9 @@ export function EditClassModal({ isOpen, onClose, classData, onSuccess }: EditCl
       await axiosClient.put(`/classes/${classData._id}`, formData);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al actualizar la clase');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al actualizar la clase');
     } finally {
       setIsLoading(false);
     }
@@ -74,8 +75,9 @@ export function EditClassModal({ isOpen, onClose, classData, onSuccess }: EditCl
       await axiosClient.delete(`/classes/${classData._id}`);
       onSuccess();
       onClose();
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Error al eliminar la clase');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { message?: string } } };
+      setError(error.response?.data?.message || 'Error al eliminar la clase');
     } finally {
       setIsLoading(false);
     }

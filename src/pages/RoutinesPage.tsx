@@ -19,7 +19,7 @@ const RoutinesPage = () => {
     const fetchRoutines = async () => {
       try {
         const res = await axiosClient.get('/routines').catch(() => ({ data: [] }));
-        setRoutines((res.data || []).map((r: any, idx: number) => ({
+        setRoutines((res.data || []).map((r: Record<string, unknown>, idx: number) => (
           _id: r._id || idx,
           name: r.name || 'Rutina sin nombre',
           frequency: r.frequency || 'Frecuencia no especificada',
@@ -95,35 +95,35 @@ const RoutinesPage = () => {
               <p className="text-center text-sm text-slate-400">No tienes rutinas creadas</p>
             ) : (
               routines.map((routine) => (
-              <div
-                key={routine.id}
-                className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                    {routine.name}
-                  </p>
-                  <p className="text-xs text-slate-600 dark:text-slate-400">
-                    {routine.frequency} · {routine.focus}
-                  </p>
+                <div
+                  key={routine._id}
+                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
+                >
+                  <div>
+                    <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                      {routine.name}
+                    </p>
+                    <p className="text-xs text-slate-600 dark:text-slate-400">
+                      {routine.frequency} · {routine.focus}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 text-xs text-slate-300">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        routine.status === "Activa"
+                          ? "bg-emerald-500/10 text-emerald-400"
+                          : "bg-slate-600/20 text-slate-300"
+                      }`}
+                    >
+                      {routine.status}
+                    </span>
+                    <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+                      Ver detalles
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-slate-300">
-                  <span
-                    className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      routine.status === "Activa"
-                        ? "bg-emerald-500/10 text-emerald-400"
-                        : "bg-slate-600/20 text-slate-300"
-                    }`}
-                  >
-                    {routine.status}
-                  </span>
               ))
-                 <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
-                    Ver detalles
-                  </button>
-                </div>
-              </div>
-            ))}
+            )}
           </div>
         </section>
       </div>

@@ -32,8 +32,8 @@ export default function UserDashboard() {
         const attendanceRes = await axiosClient.get('/attendances/list');
         const thisMonth = new Date().getMonth();
         const thisYear = new Date().getFullYear();
-        const monthAttendances = (attendanceRes.data || []).filter((a: any) => {
-          const date = new Date(a.date);
+        const monthAttendances = (attendanceRes.data || []).filter((a: Record<string, unknown>) => {
+          const date = new Date(a.date as string);
           return date.getMonth() === thisMonth && date.getFullYear() === thisYear;
         }).length;
 

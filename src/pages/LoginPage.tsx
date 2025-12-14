@@ -27,9 +27,10 @@ const LoginPage = () => {
       setLoading(true);
       await login(email, password);
       navigate("/dashboard");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
-      const errorMessage = err.response?.data?.error?.message || err.message || "";
+      const error = err as { response?: { data?: { error?: { message?: string } } }; message?: string };
+      const errorMessage = error.response?.data?.error?.message || error.message || "";
       
       // Si el error indica que el usuario no existe
       if (errorMessage.toLowerCase().includes("not found") || 

@@ -97,7 +97,7 @@ export interface UpdateProfilePayload {
 export const updateProfileRequest = async (
   userId: string,
   payload: UpdateProfilePayload
-): Promise<{ message: string; data: any }> => {
+): Promise<{ message: string; data: Record<string, unknown> }> => {
   const { data } = await axiosClient.put(`/members/${userId}`, payload);
   return data;
 };
