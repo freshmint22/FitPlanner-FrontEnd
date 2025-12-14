@@ -1,12 +1,10 @@
-// src/layouts/MainLayout.tsx
-import { useState } from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
-import { useAuth } from '@/context/useAuth';
-import { GlobalAnimations } from '@/components/ui/GlobalAnimations'; // 👈 CAMBIO
-import ThemeToggle from '@/components/ThemeToggle';
+﻿// src/layouts/MainLayout.tsx
+import { useState } from "react";
+import { NavLink, Outlet, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/useAuth";
+import { GlobalAnimations } from "@/components/ui/GlobalAnimations";
+import ThemeToggle from "@/components/ThemeToggle";
 
-
-// Tipado simple para los ítems del menú
 interface NavItem {
   label: string;
   to: string;
@@ -14,36 +12,35 @@ interface NavItem {
 }
 
 const userNav: NavItem[] = [
-  { label: 'Dashboard', to: '/dashboard', icon: '🏠' },
-  { label: 'Mi Membresía', to: '/my-membership', icon: '💳' },
-  { label: 'Clases', to: '/classes', icon: '📅' },
-  { label: 'Rutinas', to: '/routines', icon: '💪' },
+  { label: "Dashboard", to: "/dashboard", icon: "" },
+  { label: "Mi Membresía", to: "/my-membership", icon: "" },
+  { label: "Clases", to: "/classes", icon: "" },
+  { label: "Rutinas", to: "/routines", icon: "" },
 ];
 
 const adminNav: NavItem[] = [
-  { label: 'Dashboard admin', to: '/admin', icon: '📊' },
-  { label: 'Miembros', to: '/members', icon: '🧑‍🤝‍🧑' },
-  { label: 'Membresías', to: '/memberships', icon: '💳' },
-  { label: 'Reportes', to: '/reports', icon: '📈' },
+  { label: "Dashboard admin", to: "/admin", icon: "" },
+  { label: "Miembros", to: "/members", icon: "" },
+  { label: "Membresías", to: "/memberships", icon: "" },
+  { label: "Reportes", to: "/reports", icon: "" },
 ];
 
 const accountNav: NavItem[] = [
-  { label: 'Perfil', to: '/settings', icon: '🕴️' },
+  { label: "Perfil", to: "/settings", icon: "" },
 ];
 
-// Botón hamburguesa (solo móvil)
 function BurgerButton({ onClick }: { onClick: () => void }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-center rounded-[1.75rem] border border-slate-700/70 bg-slate-900/80 p-3 text-slate-100 shadow-sm backdrop-blur lg:hidden"
+      className="inline-flex items-center justify-center rounded-[1.75rem] border border-slate-300 bg-white p-3 text-slate-800 shadow-sm backdrop-blur lg:hidden dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
     >
       <span className="sr-only">Abrir menú</span>
       <span className="flex flex-col gap-1.5">
-        <span className="h-1 w-6 rounded-full bg-slate-100" />
-        <span className="h-1 w-6 rounded-full bg-slate-100" />
-        <span className="h-1 w-6 rounded-full bg-slate-100" />
+        <span className="h-1 w-6 rounded-full bg-slate-800 dark:bg-slate-100" />
+        <span className="h-1 w-6 rounded-full bg-slate-800 dark:bg-slate-100" />
+        <span className="h-1 w-6 rounded-full bg-slate-800 dark:bg-slate-100" />
       </span>
     </button>
   );
@@ -55,9 +52,9 @@ interface SidebarProps {
   className?: string;
 }
 
-function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
+function Sidebar({ onClose, isMobile = false, className = "" }: SidebarProps) {
   const { user, logout } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const isAdmin = user?.role === "ADMIN";
 
   const handleLogout = () => {
     logout();
@@ -65,25 +62,20 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
   };
 
   const baseClasses = isMobile
-    ? 'flex h-full w-72 flex-col overflow-y-auto bg-[#020617]/95 text-slate-100 shadow-2xl backdrop-blur'
-    : 'hidden w-72 flex-col overflow-y-auto border-r border-slate-800/70 bg-[#020617] text-slate-100 lg:flex lg:h-screen lg:sticky lg:top-0';
+    ? "flex h-full w-72 flex-col overflow-y-auto bg-white/95 text-slate-900 shadow-2xl backdrop-blur dark:bg-[#020617]/95 dark:text-slate-100"
+    : "hidden w-72 flex-col overflow-y-auto border-r border-slate-200 bg-white text-slate-900 lg:flex lg:h-screen lg:sticky lg:top-0 dark:border-slate-800/70 dark:bg-[#020617] dark:text-slate-100";
 
   return (
     <aside className={`${baseClasses} ${className}`}>
       <div className="flex flex-1 flex-col">
-        {/* Header del sidebar */}
-        <div className="flex items-center justify-between border-b border-slate-800/60 px-5 py-4">
+        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4 dark:border-slate-800/60">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-emerald-500 text-sm font-semibold text-slate-950 shadow-lg">
+            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 text-sm font-semibold text-white shadow-lg dark:text-slate-950">
               FP
             </div>
             <div className="flex flex-col leading-tight">
-              <span className="text-xs font-medium text-slate-400">
-                FITPLANNER MANAGER
-              </span>
-              <span className="text-sm font-semibold text-slate-100">
-                Gym Management
-              </span>
+              <span className="text-xs font-medium text-slate-500 dark:text-slate-400">FITPLANNER MANAGER</span>
+              <span className="text-sm font-semibold text-slate-900 dark:text-slate-100">Gym Management</span>
             </div>
           </div>
 
@@ -91,20 +83,16 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
             <button
               type="button"
               onClick={onClose}
-              className="rounded-full border border-slate-700/70 bg-slate-900/80 px-3 py-1 text-xs font-medium text-slate-100 shadow"
+              className="rounded-full border border-slate-200 bg-white px-3 py-1 text-xs font-medium text-slate-800 shadow dark:border-slate-700/70 dark:bg-slate-900/80 dark:text-slate-100"
             >
               Cerrar
             </button>
           )}
         </div>
 
-        {/* Navegación */}
         <nav className="flex-1 space-y-8 px-4 py-6">
-          {/* Sección usuario */}
           <div>
-            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              General
-            </p>
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-500">General</p>
             <div className="space-y-1">
               {userNav.map((item) => (
                 <NavLink
@@ -113,11 +101,11 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
                   onClick={onClose}
                   className={({ isActive }) =>
                     [
-                      'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                      "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                       isActive
-                        ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
-                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
-                    ].join(' ')
+                        ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                    ].join(" ")
                   }
                 >
                   <span className="text-lg">{item.icon}</span>
@@ -127,12 +115,9 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
             </div>
           </div>
 
-          {/* Sección administración (solo ADMIN) */}
           {isAdmin && (
             <div>
-              <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Administración
-              </p>
+              <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-500">Administración</p>
               <div className="space-y-1">
                 {adminNav.map((item) => (
                   <NavLink
@@ -141,11 +126,11 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
                     onClick={onClose}
                     className={({ isActive }) =>
                       [
-                        'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                        "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                         isActive
-                          ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
-                          : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
-                      ].join(' ')
+                          ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
+                          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                      ].join(" ")
                     }
                   >
                     <span className="text-lg">{item.icon}</span>
@@ -156,11 +141,8 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
             </div>
           )}
 
-          {/* Sección cuenta */}
           <div>
-            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-              Cuenta
-            </p>
+            <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-500">Cuenta</p>
             <div className="space-y-1">
               {accountNav.map((item) => (
                 <NavLink
@@ -169,11 +151,11 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
                   onClick={onClose}
                   className={({ isActive }) =>
                     [
-                      'flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition',
+                      "flex items-center gap-3 rounded-2xl px-3 py-2 text-sm font-medium transition",
                       isActive
-                        ? 'bg-gradient-to-r from-fuchsia-500/20 via-indigo-500/20 to-cyan-500/20 text-slate-50 shadow-[0_0_25px_rgba(59,130,246,0.35)]'
-                        : 'text-slate-400 hover:bg-slate-800/80 hover:text-slate-50',
-                    ].join(' ')
+                        ? "bg-gradient-to-r from-sky-100 to-emerald-50 text-slate-900 shadow-[0_0_25px_rgba(59,130,246,0.15)] dark:from-fuchsia-500/20 dark:via-indigo-500/20 dark:to-cyan-500/20 dark:text-slate-50 dark:shadow-[0_0_25px_rgba(59,130,246,0.35)]"
+                        : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-50",
+                    ].join(" ")
                   }
                 >
                   <span className="text-lg">{item.icon}</span>
@@ -184,24 +166,21 @@ function Sidebar({ onClose, isMobile = false, className = '' }: SidebarProps) {
           </div>
         </nav>
 
-        {/* Bloque usuario + logout */}
-        <div className="border-t border-slate-800/70 px-4 py-4">
-          <div className="rounded-2xl bg-slate-900/80 px-4 py-3 shadow-inner">
+        <div className="border-t border-slate-200 px-4 py-4 dark:border-slate-800/70">
+          <div className="rounded-2xl bg-slate-100 px-4 py-3 shadow-inner shadow-slate-200/60 dark:bg-slate-900/80 dark:shadow-inner">
             <div className="mb-2 flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-slate-50">
-                {user?.name?.[0]?.toUpperCase() ?? 'U'}
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-white dark:text-slate-50">
+                {user?.name?.[0]?.toUpperCase() ?? "U"}
               </div>
               <div className="leading-tight">
-                <p className="text-xs font-medium text-slate-400">
-                  {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
+                <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                  {user?.role === "ADMIN" ? "Administrador" : "Usuario"}
                 </p>
-                <p className="text-sm font-semibold text-slate-100">
-                  {user?.name ?? 'Sesión activa'}
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                  {user?.name ?? "Sesión activa"}
                 </p>
                 {user?.email && (
-                  <p className="truncate text-[11px] text-slate-500">
-                    {user.email}
-                  </p>
+                  <p className="truncate text-[11px] text-slate-500 dark:text-slate-500">{user.email}</p>
                 )}
               </div>
             </div>
@@ -238,25 +217,21 @@ export default function MainLayout() {
     }, 280);
   };
 
-  // Detectar el título de la página actual
   const allNav = [...userNav, ...adminNav, ...accountNav];
   const currentPage = allNav.find((item) => item.to === location.pathname);
-  const pageTitle = currentPage?.label || 'Panel de usuario';
+  const pageTitle = currentPage?.label || "Panel de usuario";
 
   return (
     <div className="min-h-screen bg-white text-slate-800 dark:bg-[#020617] dark:text-slate-100">
-      {/* 🔁 Animaciones globales (page-fade-in, card-pop, etc.) */}
       <GlobalAnimations />
 
       <div className="flex min-h-screen">
-        {/* Sidebar escritorio con animación al montar */}
         <Sidebar className="sidebar-animate-in" />
 
-        {/* Overlay + sidebar móvil */}
         {(sidebarOpen || sidebarClosing) && (
           <div
             className={`fixed inset-0 z-40 bg-black/60 backdrop-blur-sm lg:hidden ${
-              sidebarClosing ? 'overlay-animate-out' : 'overlay-animate-in'
+              sidebarClosing ? "overlay-animate-out" : "overlay-animate-in"
             }`}
           >
             <div className="absolute inset-0" onClick={startCloseSidebar} />
@@ -264,47 +239,43 @@ export default function MainLayout() {
               <Sidebar
                 isMobile
                 onClose={startCloseSidebar}
-                className={
-                  sidebarClosing ? 'sidebar-animate-out' : 'sidebar-animate-in'
-                }
+                className={sidebarClosing ? "sidebar-animate-out" : "sidebar-animate-in"}
               />
             </div>
           </div>
         )}
 
-        {/* Contenido principal */}
         <main className="flex-1">
           <div className="mx-auto flex max-w-6xl flex-col gap-6 px-4 py-6 lg:px-8 lg:py-8">
             <header className="flex items-center justify-between gap-4">
               <BurgerButton onClick={openSidebar} />
 
               <div className="flex-1 text-right lg:text-left">
-                <p className="text-xs font-medium uppercase tracking-wide text-slate-500">
+                <p className="text-xs font-medium uppercase tracking-wide text-slate-600 dark:text-slate-500">
                   FitPlanner Manager
                 </p>
-                <p className="text-sm font-semibold text-slate-100">
+                <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
                   {pageTitle}
                 </p>
               </div>
 
               <div className="hidden items-center gap-3 lg:flex">
                 <ThemeToggle />
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-slate-50">
-                  {user?.name?.[0]?.toUpperCase() ?? 'U'}
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-white dark:text-slate-50">
+                  {user?.name?.[0]?.toUpperCase() ?? "U"}
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
-                    {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
+                  <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
+                    {user?.role === "ADMIN" ? "Administrador" : "Usuario"}
                   </p>
-                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
-                    {user?.name ?? 'Sesión activa'}
+                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+                    {user?.name ?? "Sesión activa"}
                   </p>
                 </div>
               </div>
             </header>
 
-            {/* Fade-in por ruta */}
-            <div className="relative min-h-[60vh] rounded-3xl bg-white dark:bg-[#020617] overflow-hidden">
+            <div className="relative min-h-[60vh] rounded-3xl bg-white overflow-hidden dark:bg-[#020617]">
               <div key={location.pathname} className="page-fade-in h-full">
                 <Outlet />
               </div>
