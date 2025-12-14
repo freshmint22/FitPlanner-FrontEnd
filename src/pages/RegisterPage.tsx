@@ -67,8 +67,8 @@ const RegisterPage = () => {
         role,
       });
 
-      setSuccess("Cuenta creada correctamente. Ahora puedes iniciar sesión.");
-      setTimeout(() => navigate("/login"), 1500);
+      setSuccess("Usuario registrado con éxito, ahora ingresa con tu nueva cuenta!");
+      setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
       setError(
@@ -242,31 +242,33 @@ const RegisterPage = () => {
                 >
                   Contraseña
                 </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="new-password"
-                  className="block w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 pr-10 text-sm text-slate-50 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-300 hover:text-slate-100"
-                >
-                  {showPassword ? "Ocultar" : "Mostrar"}
-                </button>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="new-password"
+                    className="block w-full rounded-lg border border-slate-700 bg-slate-900 px-3 py-2 pr-10 text-sm text-slate-50 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-300 hover:text-slate-100"
+                  >
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
               </div>
 
-              <label
-                htmlFor="confirmPassword"
-                className="block text-sm font-medium text-slate-200 mb-1"
-              >
-                Confirmar contraseña
-              </label>
+              <div>
+                <label
+                  htmlFor="confirmPassword"
+                  className="block text-sm font-medium text-slate-200 mb-1"
+                >
+                  Confirmar contraseña
+                </label>
                 <div className="relative">
                   <input
                     id="confirmPassword"

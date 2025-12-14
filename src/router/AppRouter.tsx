@@ -49,6 +49,7 @@ export default function AppRouter() {
         <Route element={<MainLayout />}>
           {/* Rutas generales (USER y ADMIN) */}
           <Route path="/dashboard" element={<UserDashboardPage />} />
+          <Route path="/my-membership" element={<MembershipsPage />} />
           <Route path="/classes" element={<ClassesPage />} />
           <Route path="/routines" element={<RoutinesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
