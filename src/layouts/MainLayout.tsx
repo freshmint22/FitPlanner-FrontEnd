@@ -13,7 +13,8 @@ interface NavItem {
 }
 
 const userNav: NavItem[] = [
-  { label: 'Dashboard usuario', to: '/dashboard', icon: '🏠' },
+  { label: 'Dashboard', to: '/dashboard', icon: '🏠' },
+  { label: 'Mi Membresía', to: '/my-membership', icon: '💳' },
   { label: 'Clases', to: '/classes', icon: '📅' },
   { label: 'Rutinas', to: '/routines', icon: '💪' },
 ];
@@ -236,6 +237,11 @@ export default function MainLayout() {
     }, 280);
   };
 
+  // Detectar el título de la página actual
+  const allNav = [...userNav, ...adminNav, ...accountNav];
+  const currentPage = allNav.find((item) => item.to === location.pathname);
+  const pageTitle = currentPage?.label || 'Panel de usuario';
+
   return (
     <div className="min-h-screen bg-[#020617] text-slate-100">
       {/* 🔁 Animaciones globales (page-fade-in, card-pop, etc.) */}
@@ -276,9 +282,7 @@ export default function MainLayout() {
                   FitPlanner Manager
                 </p>
                 <p className="text-sm font-semibold text-slate-100">
-                  {user?.role === 'ADMIN'
-                    ? 'Panel administrativo'
-                    : 'Panel de usuario'}
+                  {pageTitle}
                 </p>
               </div>
 
