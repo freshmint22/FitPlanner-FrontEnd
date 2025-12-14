@@ -1,4 +1,5 @@
 // src/pages/SettingsPage.tsx
+import { useState } from "react";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageSection } from "@/components/ui/PageSection";
 import { useAuth } from "@/context/useAuth";
@@ -6,6 +7,9 @@ import { useAuth } from "@/context/useAuth";
 export default function SettingsPage() {
   // Por ahora todo es estático / maqueta. Luego lo conectas al backend.
   const { user } = useAuth();
+  const [showPassword, setShowPassword] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const memberSince = "Enero 2024";
   const fullName = user?.name?.trim() ?? "";
   const [firstName = "", ...restName] = fullName.split(/\s+/).filter(Boolean);
@@ -187,6 +191,95 @@ export default function SettingsPage() {
         </section>
       </div>
 
+      {/* Seguridad */}
+      <PageSection
+        title="Seguridad"
+        description="Administra tu contraseña y la seguridad de tu cuenta."
+      >
+        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-6 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-950/80 dark:shadow-[0_18px_45px_rgba(15,23,42,0.9)]">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-100">
+            Cambiar contraseña
+          </h2>
+          <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+            Actualiza tu contraseña para mantener tu cuenta segura.
+          </p>
+
+          <form className="mt-5 space-y-4">
+            <div>
+              <label
+                htmlFor="currentPassword"
+                className="mb-1 block text-xs font-medium text-slate-300"
+              >
+                Contraseña actual
+              </label>
+              <div className="relative">
+                <input
+                  id="currentPassword"
+                  type={showPassword ? "text" : "password"}
+                  defaultValue="password123"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label
+                htmlFor="newPassword"
+                className="mb-1 block text-xs font-medium text-slate-300"
+              >
+                Nueva contraseña
+              </label>
+              <input
+                id="newPassword"
+                type="password"
+                placeholder="Ingresa tu nueva contraseña"
+                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+              />
+            </div>
+
+            <div>
+              <label
+                htmlFor="confirmPassword"
+                className="mb-1 block text-xs font-medium text-slate-300"
+              >
+                Confirmar nueva contraseña
+              </label>
+              <input
+                id="confirmPassword"
+                type="password"
+                placeholder="Confirma tu nueva contraseña"
+                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+              />
+            </div>
+
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
+              >
+                Actualizar contraseña
+              </button>
+            </div>
+          </form>
+        </div>
+      </PageSection>
+
       {/* Información de membresía */}
       <PageSection
         title="Información de membresía"
@@ -227,6 +320,76 @@ export default function SettingsPage() {
           </div>
         </div>
       </PageSection>
+
+      {/* Zona de peligro */}
+      <PageSection
+        title="Zona de peligro"
+        description="Acciones irreversibles que afectarán permanentemente tu cuenta."
+      >
+        <div className="rounded-3xl border border-red-200 bg-red-50/50 px-6 py-5 dark:border-red-900/50 dark:bg-red-950/20">
+          <h3 className="text-sm font-semibold text-red-900 dark:text-red-400">
+            Eliminar cuenta
+          </h3>
+          <p className="mt-1 text-xs text-red-700 dark:text-red-400/80">
+            Una vez que elimines tu cuenta, no hay vuelta atrás. Por favor, asegúrate de que esto es lo que deseas.
+          </p>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            className="mt-4 inline-flex items-center justify-center rounded-2xl bg-red-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-red-500 dark:bg-red-600 dark:hover:bg-red-500"
+          >
+            Eliminar cuenta
+          </button>
+        </div>
+      </PageSection>
+
+      {/* Modal de confirmación de eliminación */}
+      {showDeleteModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 w-full max-w-md rounded-3xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-950">
+            <h3 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              ¿Estás seguro?
+            </h3>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+              Esta acción es irreversible. Para confirmar la eliminación de tu cuenta, escribe <strong>ELIMINAR</strong> en el campo a continuación.
+            </p>
+
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="Escribe ELIMINAR"
+              className="mt-4 h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-red-500 focus:ring-2 focus:ring-red-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+            />
+
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                }}
+                className="flex-1 rounded-2xl border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300 dark:hover:bg-slate-800"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                disabled={deleteConfirmText !== "ELIMINAR"}
+                onClick={() => {
+                  // Aquí va la lógica de eliminación
+                  console.log("Cuenta eliminada");
+                  setShowDeleteModal(false);
+                  setDeleteConfirmText("");
+                }}
+                className="flex-1 rounded-2xl bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-red-600"
+              >
+                Eliminar cuenta
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
