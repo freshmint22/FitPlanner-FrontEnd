@@ -10,7 +10,7 @@ const LoginPage = () => {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<React.ReactNode>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -27,9 +27,26 @@ const LoginPage = () => {
       setLoading(true);
       await login(email, password);
       navigate("/dashboard");
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      setError("Credenciales inválidas o error en el servidor.");
+      const errorMessage = err.response?.data?.error?.message || err.message || "";
+      
+      // Si el error indica que el usuario no existe
+      if (errorMessage.toLowerCase().includes("not found") || 
+          errorMessage.toLowerCase().includes("no encontrado") ||
+          errorMessage.toLowerCase().includes("invalid email")) {
+        setError(
+          <span>
+            Usuario no encontrado. Por favor{" "}
+            <Link to="/register" className="font-semibold underline text-blue-600 hover:text-blue-500 dark:text-blue-400">
+              registre su cuenta
+            </Link>
+            .
+          </span>
+        );
+      } else {
+        setError("Credenciales inválidas o error en el servidor.");
+      }
     } finally {
       setLoading(false);
     }

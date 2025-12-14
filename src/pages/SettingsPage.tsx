@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageSection } from "@/components/ui/PageSection";
 import { useAuth } from "@/context/useAuth";
-import { changePasswordRequest, deleteAccountRequest } from "@/api/authService";
+import { changePasswordRequest, deleteAccountRequest, updateProfileRequest } from "@/api/authService";
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
@@ -12,7 +12,6 @@ export default function SettingsPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
-  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -89,7 +88,27 @@ export default function SettingsPage() {
             Actualiza tus datos personales para mantener tu perfil al día.
           </p>
 
-          <form className="mt-5 space-y-4">
+          <form className="mt-5 space-y-4" onSubmit={async (e) => {
+            e.preventDefault();
+            if (!user?.id) return;
+
+            const formData = new FormData(e.currentTarget);
+            const payload = {
+              firstName: formData.get("firstName") as string,
+              lastName: formData.get("lastName") as string,
+              email: formData.get("email") as string,
+              phone: formData.get("phone") as string,
+              birthDate: formData.get("birthDate") as string,
+              gender: formData.get("gender") as string,
+            };
+
+            try {
+              await updateProfileRequest(user.id, payload);
+              alert("Perfil actualizado exitosamente");
+            } catch (error) {
+              alert("Error al actualizar el perfil");
+            }
+          }}>
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <label
@@ -100,6 +119,7 @@ export default function SettingsPage() {
                 </label>
                 <input
                   id="firstName"
+                  name="firstName"
                   type="text"
                   defaultValue={firstName}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
@@ -115,6 +135,7 @@ export default function SettingsPage() {
                 </label>
                 <input
                   id="lastName"
+                  name="lastName"
                   type="text"
                   defaultValue={lastName}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
@@ -131,6 +152,7 @@ export default function SettingsPage() {
               </label>
               <input
                 id="email"
+                name="email"
                 type="email"
                 defaultValue={email}
                 className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
@@ -146,6 +168,7 @@ export default function SettingsPage() {
               </label>
               <input
                 id="phone"
+                name="phone"
                 type="tel"
                 defaultValue={phone}
                 placeholder={phone ? undefined : "agregar numero"}
@@ -163,6 +186,7 @@ export default function SettingsPage() {
                 </label>
                 <input
                   id="birthDate"
+                  name="birthDate"
                   type="date"
                   defaultValue={birthDate}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
@@ -178,6 +202,7 @@ export default function SettingsPage() {
                 </label>
                 <select
                   id="gender"
+                  name="gender"
                   defaultValue={gender || ""}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:ring-sky-500/30"
                 >
@@ -191,7 +216,7 @@ export default function SettingsPage() {
 
             <div className="mt-4 flex justify-end">
               <button
-                type="button"
+                type="submit"
                 className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
                 Guardar cambios
@@ -219,7 +244,7 @@ export default function SettingsPage() {
             setPasswordError("");
             setPasswordSuccess("");
 
-            if (!currentPassword || !newPassword || !confirmPassword) {
+            if (!newPassword || !confirmPassword) {
               setPasswordError("Todos los campos son requeridos");
               return;
             }
@@ -236,9 +261,8 @@ export default function SettingsPage() {
 
             try {
               setIsChangingPassword(true);
-              await changePasswordRequest({ currentPassword, newPassword });
+              await changePasswordRequest({ currentPassword: "", newPassword });
               setPasswordSuccess("Contraseña actualizada exitosamente");
-              setCurrentPassword("");
               setNewPassword("");
               setConfirmPassword("");
             } catch (error: any) {
@@ -257,20 +281,21 @@ export default function SettingsPage() {
                 {passwordSuccess}
               </div>
             )}
+
             <div>
               <label
-                htmlFor="currentPassword"
+                htmlFor="newPassword"
                 className="mb-1 block text-xs font-medium text-slate-300"
               >
-                Contraseña actual
+                Nueva contraseña
               </label>
               <div className="relative">
                 <input
-                  id="currentPassword"
+                  id="newPassword"
                   type={showPassword ? "text" : "password"}
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="Ingresa tu contraseña actual"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="Ingresa tu nueva contraseña"
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <button
@@ -294,36 +319,37 @@ export default function SettingsPage() {
 
             <div>
               <label
-                htmlFor="newPassword"
-                className="mb-1 block text-xs font-medium text-slate-300"
-              >
-                Nueva contraseña
-              </label>
-              <input
-                id="newPassword"
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="Ingresa tu nueva contraseña"
-                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
-              />
-            </div>
-
-            <div>
-              <label
                 htmlFor="confirmPassword"
                 className="mb-1 block text-xs font-medium text-slate-300"
               >
                 Confirmar nueva contraseña
               </label>
-              <input
-                id="confirmPassword"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirma tu nueva contraseña"
-                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
-              />
+              <div className="relative">
+                <input
+                  id="confirmPassword"
+                  type={showPassword ? "text" : "password"}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="Confirma tu nueva contraseña"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  {showPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
             </div>
 
             <div className="mt-4 flex justify-end">

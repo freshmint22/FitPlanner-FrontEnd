@@ -84,3 +84,20 @@ export const deleteAccountRequest = async (): Promise<{ message: string }> => {
   const { data } = await axiosClient.delete("/users/account");
   return data;
 };
+
+export interface UpdateProfilePayload {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+}
+
+export const updateProfileRequest = async (
+  userId: string,
+  payload: UpdateProfilePayload
+): Promise<{ message: string; data: any }> => {
+  const { data } = await axiosClient.put(`/members/${userId}`, payload);
+  return data;
+};
