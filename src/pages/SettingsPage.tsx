@@ -1,10 +1,27 @@
 // src/pages/SettingsPage.tsx
 import { PageHeader } from "@/components/ui/PageHeader";
 import { PageSection } from "@/components/ui/PageSection";
+import { useAuth } from "@/context/useAuth";
 
 export default function SettingsPage() {
   // Por ahora todo es estático / maqueta. Luego lo conectas al backend.
+  const { user } = useAuth();
   const memberSince = "Enero 2024";
+  const fullName = user?.name?.trim() ?? "";
+  const [firstName = "", ...restName] = fullName.split(/\s+/).filter(Boolean);
+  const lastName = restName.join(" ");
+  const email = user?.email ?? "";
+  const phone = (user as { phone?: string })?.phone ?? "";
+  const birthDate = (user as { birthDate?: string })?.birthDate ?? "";
+  const gender = (user as { gender?: string })?.gender ?? "";
+  const initials = fullName
+    ? fullName
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("")
+    : "FP";
 
   return (
     <div className="flex flex-col gap-6 page-fade-in">
@@ -28,18 +45,12 @@ export default function SettingsPage() {
 
           <div className="mt-6 flex flex-col items-center gap-4">
             <div className="relative flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 via-indigo-500 to-emerald-400 text-3xl font-semibold text-white shadow-lg shadow-emerald-500/40">
-              AD
-              <button
-                type="button"
-                className="absolute bottom-2 right-2 inline-flex h-8 w-8 items-center justify-center rounded-full bg-white text-xs font-bold text-slate-800 shadow-md border border-slate-300 dark:bg-slate-950/90 dark:text-slate-100 dark:border-slate-800"
-              >
-                📷
-              </button>
+              {initials}
             </div>
 
             <div className="text-center">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">
-                Administrador
+                {fullName || "Administrador"}
               </p>
               <p className="text-xs text-slate-600 dark:text-slate-400">
                 Miembro desde {memberSince}
@@ -76,7 +87,7 @@ export default function SettingsPage() {
                 <input
                   id="firstName"
                   type="text"
-                  defaultValue="Juan"
+                  defaultValue={firstName}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
@@ -91,7 +102,7 @@ export default function SettingsPage() {
                 <input
                   id="lastName"
                   type="text"
-                  defaultValue="Díaz"
+                  defaultValue={lastName}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
@@ -107,7 +118,7 @@ export default function SettingsPage() {
               <input
                 id="email"
                 type="email"
-                defaultValue="juan.diaz@email.com"
+                defaultValue={email}
                 className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
             </div>
@@ -122,7 +133,8 @@ export default function SettingsPage() {
               <input
                 id="phone"
                 type="tel"
-                defaultValue="+57 300 123 4567"
+                defaultValue={phone}
+                placeholder={phone ? undefined : "agregar numero"}
                 className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
               />
             </div>
@@ -138,7 +150,7 @@ export default function SettingsPage() {
                 <input
                   id="birthDate"
                   type="date"
-                  defaultValue="1990-05-15"
+                  defaultValue={birthDate}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
               </div>
@@ -152,9 +164,10 @@ export default function SettingsPage() {
                 </label>
                 <select
                   id="gender"
-                  defaultValue="masculino"
+                  defaultValue={gender || ""}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:focus:ring-sky-500/30"
                 >
+                  <option value="">Seleccionar</option>
                   <option value="masculino">Masculino</option>
                   <option value="femenino">Femenino</option>
                   <option value="otro">Otro</option>
