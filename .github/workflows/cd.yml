@@ -6,6 +6,11 @@ on:
   release:
     types: [ published ]
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -29,7 +34,6 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: dist/
-          cname: your-frontend-domain.com
 
       - name: Output deployment URL
-        run: echo "Frontend deployed to https://your-username.github.io/your-repo/"
+        run: echo "Frontend deployed successfully"
