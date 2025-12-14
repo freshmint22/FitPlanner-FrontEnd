@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/context/useAuth';
 import { GlobalAnimations } from '@/components/ui/GlobalAnimations'; // 👈 CAMBIO
+import ThemeToggle from '@/components/ThemeToggle';
 
 
 // Tipado simple para los ítems del menú
@@ -243,7 +244,7 @@ export default function MainLayout() {
   const pageTitle = currentPage?.label || 'Panel de usuario';
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100">
+    <div className="min-h-screen bg-white text-slate-800 dark:bg-[#020617] dark:text-slate-100">
       {/* 🔁 Animaciones globales (page-fade-in, card-pop, etc.) */}
       <GlobalAnimations />
 
@@ -287,14 +288,15 @@ export default function MainLayout() {
               </div>
 
               <div className="hidden items-center gap-3 lg:flex">
+                <ThemeToggle />
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-indigo-500 text-sm font-semibold text-slate-50">
                   {user?.name?.[0]?.toUpperCase() ?? 'U'}
                 </div>
                 <div className="text-right">
-                  <p className="text-xs font-medium text-slate-400">
+                  <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                     {user?.role === 'ADMIN' ? 'Administrador' : 'Usuario'}
                   </p>
-                  <p className="text-sm font-semibold text-slate-100">
+                  <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                     {user?.name ?? 'Sesión activa'}
                   </p>
                 </div>
@@ -302,7 +304,7 @@ export default function MainLayout() {
             </header>
 
             {/* Fade-in por ruta */}
-            <div className="relative min-h-[60vh] rounded-3xl bg-[#020617] overflow-hidden">
+            <div className="relative min-h-[60vh] rounded-3xl bg-white dark:bg-[#020617] overflow-hidden">
               <div key={location.pathname} className="page-fade-in h-full">
                 <Outlet />
               </div>

@@ -1,4 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom';
+import ThemeToggle from '@/components/ThemeToggle';
 
 export default function PublicLayout() {
   const location = useLocation();
@@ -16,21 +17,21 @@ export default function PublicLayout() {
   );
 
   return (
-    <div className="min-h-screen bg-[#020617] text-slate-100 flex flex-col">
+    <div className="min-h-screen flex flex-col bg-white text-slate-800 dark:bg-[#020617] dark:text-slate-100">
       {/* NAVBAR SOLO PARA RUTAS PÚBLICAS NORMALES (NO AUTH) */}
       {!isAuthRoute && (
-        <header className="border-b border-slate-800/60 bg-[#020617]/85 backdrop-blur">
+        <header className="border-b border-slate-200 bg-white/85 backdrop-blur dark:border-slate-800/60 dark:bg-[#020617]/85">
           <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 lg:px-8">
             {/* Logo + nombre */}
             <div className="flex items-center gap-3">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-400 to-emerald-500 text-sm font-semibold text-slate-950 shadow-lg">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-cyan-500 to-emerald-500 text-sm font-semibold text-white shadow-lg dark:text-slate-950">
                 FP
               </div>
               <div className="leading-tight">
-                <p className="text-xs font-medium text-slate-400">
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">
                   FITPLANNER MANAGER
                 </p>
-                <p className="text-sm font-semibold text-slate-100">
+                <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">
                   Gym Management
                 </p>
               </div>
@@ -38,10 +39,14 @@ export default function PublicLayout() {
 
             {/* Acciones derecha */}
             <nav className="flex items-center gap-3 text-xs font-semibold">
+              <ThemeToggle />
+              {/* Toggle tema */}
+              
               {/* Iniciar sesión */}
               <Link
                 to="/login"
-                className="btn-raise rounded-2xl px-4 py-2 border border-slate-700/80 bg-slate-950/60 text-slate-100 hover:bg-slate-900"
+                className="btn-raise rounded-2xl px-4 py-2 border bg-slate-100 text-slate-800 border-slate-300 hover:bg-slate-200
+                           dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-100 dark:hover:bg-slate-900"
               >
                 Iniciar sesión
               </Link>
@@ -49,7 +54,7 @@ export default function PublicLayout() {
               {/* Crear cuenta */}
               <Link
                 to="/register"
-                className="btn-raise rounded-2xl px-4 py-2 bg-sky-500 text-white hover:bg-sky-400"
+                className="btn-raise rounded-2xl px-4 py-2 bg-sky-600 text-white hover:bg-sky-500 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
                 Crear cuenta
               </Link>
@@ -72,8 +77,8 @@ export default function PublicLayout() {
 
       {/* FOOTER SOLO PARA RUTAS PÚBLICAS NORMALES */}
       {!isAuthRoute && (
-        <footer className="border-t border-slate-800/60 bg-[#020617]/95">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-[11px] text-slate-500 lg:px-8">
+        <footer className="border-t border-slate-200 bg-white/95 dark:border-slate-800/60 dark:bg-[#020617]/95">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4 text-[11px] text-slate-600 lg:px-8 dark:text-slate-500">
             <span>© 2025 FitPlanner Manager.</span>
             <span>
               Diseñado para administrar gimnasios, entrenadores y miembros.
