@@ -1,6 +1,8 @@
 // src/pages/RoutinesPage.tsx
 import { useEffect, useState } from 'react';
 import axiosClient from '@/api/axiosClient';
+import CreateRoutineWithAIButton from '@/components/CreateRoutineWithAIButton';
+import AIChatbot from '@/components/AIChatbot';
 
 interface Routine {
   _id?: string;
@@ -14,6 +16,7 @@ interface Routine {
 const RoutinesPage = () => {
   const [routines, setRoutines] = useState<Routine[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [showAI, setShowAI] = useState(false);
 
   useEffect(() => {
     const fetchRoutines = async () => {
@@ -83,10 +86,56 @@ const RoutinesPage = () => {
                 Gestiona y revisa tus planes de entrenamiento.
               </p>
             </div>
-            <button className="rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
-              Crear rutina
-            </button>
+            <div className="flex items-center gap-3">
+              <CreateRoutineWithAIButton onClick={() => setShowAI(true)} />
+            </div>
           </div>
+
+          {/* AI full-page view (replaces routines list) */}
+          {showAI ? (
+            <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+              <div className="mb-4">
+                <AIChatbot onBack={() => setShowAI(false)} />
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {isLoading ? (
+                <p className="text-center text-sm text-slate-400">Cargando rutinas...</p>
+              ) : routines.length === 0 ? (
+                <p className="text-center text-sm text-slate-400">No tienes rutinas creadas</p>
+              ) : (
+                routines.map((routine) => (
+                  <div
+                    key={routine._id}
+                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
+                  >
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                        {routine.name}
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">
+                        {routine.frequency} · {routine.focus}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3 text-xs text-slate-300">
+                      <span
+                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          routine.status === "Activa"
+                            ? "bg-emerald-500/10 text-emerald-400"
+                            : "bg-slate-600/20 text-slate-300"
+                        }`}>
+                        {routine.status}
+                      </span>
+                      <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+                        Ver detalles
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
 
           <div className="space-y-3">
             {isLoading ? (
