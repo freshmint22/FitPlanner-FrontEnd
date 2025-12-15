@@ -1,4 +1,5 @@
 // src/pages/ClassesPage.tsx
+import AIChatbot from '@/components/AIChatbot';
 const mockClasses = [
   {
     id: 1,
@@ -120,6 +121,18 @@ const ClassesPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </section>
+
+        {/* Asistente IA */}
+        <section className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-slate-50">Asistente IA</h2>
+            <p className="text-xs text-slate-400">Haz preguntas rápidas sobre clases, horarios y entrenadores.</p>
+          </div>
+
+          <div>
+            <AIChatbot />
           </div>
         </section>
       </div>
