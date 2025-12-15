@@ -1,6 +1,6 @@
 // src/pages/RoutinesPage.tsx
 import { useEffect, useState } from 'react';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 
 interface Routine {
   _id?: string;

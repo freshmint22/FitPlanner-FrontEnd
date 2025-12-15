@@ -1,7 +1,7 @@
 // src/components/modals/EditClassModal.tsx
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 
 interface Class {
   _id: string;

@@ -1,7 +1,7 @@
 // src/components/modals/EditMemberModal.tsx
 import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 import type { MemberDto } from '@/api/membersService';
 
 interface EditMemberModalProps {

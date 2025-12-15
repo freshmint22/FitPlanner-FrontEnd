@@ -1,6 +1,6 @@
 // src/pages/ReportsPage.tsx
 import { useEffect, useState } from 'react';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 
 interface Reports {
   ingresos: string;

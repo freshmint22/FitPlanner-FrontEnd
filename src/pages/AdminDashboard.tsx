@@ -5,7 +5,7 @@ import { PageSection } from '@/components/ui/PageSection';
 import { KpiCard } from '@/components/ui/KpiCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 
 interface DashboardKPIs {
   totalMiembros: number;

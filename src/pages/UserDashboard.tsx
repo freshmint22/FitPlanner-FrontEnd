@@ -3,8 +3,8 @@ import { useEffect, useState } from 'react';
 import { PageHeader } from '@/components/ui/PageHeader';
 import { PageSection } from '@/components/ui/PageSection';
 import { KpiCard } from '@/components/ui/KpiCard';
-import { useAuth } from '@/context/AuthContext';
-import { axiosClient } from '@/api/axiosClient';
+import { useAuth } from '@/context/useAuth';
+import axiosClient from '@/api/axiosClient';
 
 interface UserStats {
   attendanceThisMonth: number;

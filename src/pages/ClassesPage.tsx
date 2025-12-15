@@ -1,8 +1,8 @@
 // src/pages/ClassesPage.tsx
 import { useEffect, useState } from 'react';
-import { axiosClient } from '@/api/axiosClient';
+import axiosClient from '@/api/axiosClient';
 import { EditClassModal } from '@/components/modals/EditClassModal';
-import { useAuth } from '@/context/AuthContext';
+import { useAuth } from '@/context/useAuth';
 
 interface Class {
   _id: string;
@@ -116,50 +116,55 @@ const ClassesPage = () => {
             ) : classes.length === 0 ? (
               <p className="text-center text-sm text-slate-400">No hay clases disponibles</p>
             ) : (
-              classes.map((cls) => (
-                <div
-                  key={cls._id}
-                  className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
-                >
-                  <div>
-                    <p className="text-sm font-semibold text-slate-50">
-                      {cls.name}
-                    </p>
-                  <p className="text-xs text-slate-400">
-                    {cls.hour || 'Horario no especificado'} · {cls.room || 'Sala no especificada'}
-                  </p>
-                  <p className="mt-1 text-[11px] text-slate-500">
-                    Entrenador:{" "}
-                    <span className="font-medium text-slate-200">
-                      {cls.trainer || 'No asignado'}
-                    </span>{" "}
-                    · Nivel: {cls.level || 'Sin nivel'}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3 text-xs text-slate-300">
-                  <div className="text-right">
-                    <p className="text-[11px] text-slate-500">Cupos</p>
-                    <p className="font-semibold">{cls.reservations || 0} / {cls.capacity || 0}</p>
-                  </div>
-                  {user?.role === 'ADMIN' && (
-                    <button 
-                      onClick={() => {
-                        setSelectedClass(cls);
-                        setIsEditModalOpen(true);
-                      }}
-                      className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+              <>
+                {classes.map((cls) => {
+                  return (
+                    <div
+                      key={cls._id}
+                      className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 rounded-xl border border-slate-200 bg-white px-3 py-3 dark:border-slate-800 dark:bg-slate-950"
                     >
-                      Editar
-                    </button>
-                  )}
-                  {user?.role !== 'ADMIN' && (
-                    <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
-                      Reservar
-                    </button>
-                  )}
-                </div>
-              </div>
-            ))}
+                      <div>
+                        <p className="text-sm font-semibold text-slate-50">
+                          {cls.name}
+                        </p>
+                        <p className="text-xs text-slate-400">
+                          {cls.hour || 'Horario no especificado'} · {cls.room || 'Sala no especificada'}
+                        </p>
+                        <p className="mt-1 text-[11px] text-slate-500">
+                          Entrenador:{" "}
+                          <span className="font-medium text-slate-200">
+                            {cls.trainer || 'No asignado'}
+                          </span>{" "}
+                          · Nivel: {cls.level || 'Sin nivel'}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-3 text-xs text-slate-300">
+                        <div className="text-right">
+                          <p className="text-[11px] text-slate-500">Cupos</p>
+                          <p className="font-semibold">{cls.reservations || 0} / {cls.capacity || 0}</p>
+                        </div>
+                        {user?.role === 'ADMIN' && (
+                          <button 
+                            onClick={() => {
+                              setSelectedClass(cls);
+                              setIsEditModalOpen(true);
+                            }}
+                            className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800"
+                          >
+                            Editar
+                          </button>
+                        )}
+                        {user?.role !== 'ADMIN' && (
+                          <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-800">
+                            Reservar
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </>
+            )}
           </div>
         </section>
       </div>
@@ -191,3 +196,4 @@ const ClassesPage = () => {
 };
 
 export default ClassesPage;
+

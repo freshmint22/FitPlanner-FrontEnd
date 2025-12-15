@@ -1,7 +1,15 @@
 // src/pages/MembershipsPage.tsx
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/context/AuthContext';
-import { axiosClient } from '@/api/axiosClient';
+import { useAuth } from '@/context/useAuth';
+import axiosClient from '@/api/axiosClient';
+
+type Membership = {
+  name?: string;
+  price?: number | string;
+  duration?: number | string;
+  endDate?: string;
+  status?: string;
+};
 
 type Plan = {
   id: number;
@@ -41,36 +49,46 @@ const MembershipsPage = () => {
     paymentMethod: "N/A",
     status: "Inactivo",
   });
-  
+
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
   const [paymentsHistory, setPaymentsHistory] = useState<Payment[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        // Obtener membresía actual del usuario
-        if (user?.membership) {
-          const endDate = new Date(user.membership.endDate);
+        const memb = user?.membership as Membership | undefined | null;
+        if (memb && (memb.endDate || memb.duration)) {
+          const endDate = memb.endDate ? new Date(memb.endDate) : null;
           const today = new Date();
-          const daysLeft = Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-          
+          const totalDays = Number(memb.duration) || 30;
+          const daysLeft = endDate ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : Math.max(0, totalDays);
+          const priceNumber = Number(memb.price) || 0;
+
           setCurrentPlan({
-            name: user.membership.name || "Sin plan",
-            price: `$${user.membership.price?.toLocaleString() || '0'} / mes`,
+            name: memb.name || "Sin plan",
+            price: `$${priceNumber.toLocaleString()} / mes`,
             daysLeft: Math.max(0, daysLeft),
-            totalDays: user.membership.duration || 30,
-            nextPayment: endDate.toLocaleDateString(),
+            totalDays,
+            nextPayment: endDate ? endDate.toLocaleDateString() : "N/A",
             paymentMethod: "•••• ****",
-            status: daysLeft > 0 ? "Activo" : "Vencido",
+            status: (endDate && daysLeft > 0) || memb.status === 'active' ? "Activo" : "Vencido",
+          });
+        } else {
+          setCurrentPlan({
+            name: "Sin membresía",
+            price: "$0",
+            daysLeft: 0,
+            totalDays: 0,
+            nextPayment: "N/A",
+            paymentMethod: "N/A",
+            status: "Inactivo",
           });
         }
 
-        // Obtener planes disponibles (desde API o usar defaults)
         const plansRes = await axiosClient.get('/plans').catch(() => ({ data: [] }));
         if (plansRes.data && plansRes.data.length > 0) {
           setAvailablePlans(plansRes.data);
         } else {
-          // Planes por defecto (coinciden con seed.ts)
           setAvailablePlans([
             {
               id: 1,
@@ -128,21 +146,22 @@ const MembershipsPage = () => {
           ]);
         }
 
-        // Obtener historial de pagos
         const paymentsRes = await axiosClient.get('/payments').catch(() => ({ data: [] }));
         if (paymentsRes.data && paymentsRes.data.length > 0) {
-          setPaymentsHistory(paymentsRes.data.map((p: Record<string, unknown>, idx: number) => ({
-            id: idx + 1,
-            date: new Date(p.date as string).toLocaleDateString(),
-            invoice: `#INV-${new Date(p.date as string).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
-            amount: `$${(p.amount as number)?.toLocaleString() || '0'}`,
-            status: "Pagado",
-          })));
+          setPaymentsHistory(paymentsRes.data.map((p: Record<string, unknown>, idx: number) => {
+            const dateStr = (p.date as string) || new Date().toISOString();
+            const amountNum = Number(p.amount) || 0;
+            return {
+              id: idx + 1,
+              date: new Date(dateStr).toLocaleDateString(),
+              invoice: `#INV-${new Date(dateStr).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+              amount: `$${amountNum.toLocaleString()}`,
+              status: "Pagado",
+            } as Payment;
+          }));
         }
       } catch (error) {
         console.error('Error fetching memberships data:', error);
-      } finally {
-        // Loading complete
       }
     };
 
@@ -150,7 +169,7 @@ const MembershipsPage = () => {
   }, [user]);
 
   const progressPercent =
-    (currentPlan.daysLeft / currentPlan.totalDays) * 100;
+    currentPlan.totalDays > 0 ? (currentPlan.daysLeft / currentPlan.totalDays) * 100 : 0;
 
   return (
     <div className="flex flex-col gap-6 page-fade-in">
@@ -204,7 +223,7 @@ const MembershipsPage = () => {
               <div className="mt-1.5 h-1.5 w-full rounded-full bg-slate-800">
                 <div
                   className="h-1.5 rounded-full bg-sky-500"
-                  style={{ width: `${progressPercent}%` }}
+                  style={{ width: `${Math.max(0, Math.min(100, progressPercent))}%` }}
                 />
               </div>
             </div>
