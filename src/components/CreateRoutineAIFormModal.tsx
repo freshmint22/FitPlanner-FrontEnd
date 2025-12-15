@@ -1,10 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 
+interface RoutinePayload {
+  objective: string;
+  level: string;
+  targets: string[];
+  restrictions: string;
+  daysPerWeek: number;
+}
+
 interface Props {
   isOpen: boolean;
   onClose: () => void;
-  onGenerate?: (payload: any) => Promise<string | null>;
+  onGenerate?: (payload: RoutinePayload) => Promise<string | null>;
 }
 
 const OBJECTIVES = [
@@ -50,7 +58,7 @@ const CreateRoutineAIFormModal: React.FC<Props> = ({ isOpen, onClose, onGenerate
     setIsGenerating(true);
     setResult(null);
 
-    const payload = {
+    const payload: RoutinePayload = {
       objective,
       level,
       targets: selectedTargets,
@@ -83,7 +91,8 @@ const CreateRoutineAIFormModal: React.FC<Props> = ({ isOpen, onClose, onGenerate
         const data = await resp.json();
         setResult(data?.routine || 'No se recibió respuesta de la IA.');
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
+      // make the error printable without using `any`
       console.error(e);
       setResult('Hubo un error generando la rutina. Intenta de nuevo.');
     } finally {
