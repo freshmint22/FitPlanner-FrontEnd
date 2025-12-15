@@ -2,7 +2,12 @@ import axios from 'axios';
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
-  withCredentials: true, // si usas cookies; si no, puedes quitarlo
+  // Evita requisitos estrictos de CORS con credenciales si no usas cookies
+  withCredentials: false,
+  timeout: 10000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 axiosClient.interceptors.request.use((config) => {

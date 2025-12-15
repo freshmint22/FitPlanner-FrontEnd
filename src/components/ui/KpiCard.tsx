@@ -30,7 +30,7 @@ export function KpiCard({
     return (
       <div
         ref={ref}
-        className={`card-pop rounded-3xl border border-slate-800/70 bg-slate-950/70 px-5 py-4 shadow-lg shadow-slate-950/50 ${
+        className={`card-pop rounded-3xl border border-slate-200 bg-white/90 px-5 py-4 shadow-lg shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-950/70 dark:shadow-slate-950/50 ${
           isVisible ? 'reveal-visible' : 'reveal-hidden'
         }`}
       >
@@ -58,25 +58,25 @@ export function KpiCard({
   return (
     <div
       ref={ref}
-      className={`card-pop flex items-start gap-3 rounded-3xl border border-slate-800/70 bg-slate-950/70 px-5 py-4 shadow-lg shadow-slate-950/50 ${
+      className={`card-pop flex items-start gap-3 rounded-3xl border border-slate-200 bg-white/90 px-5 py-4 shadow-lg shadow-slate-200/60 dark:border-slate-800/70 dark:bg-slate-950/70 dark:shadow-slate-950/50 ${
         isVisible ? 'reveal-visible' : 'reveal-hidden'
       }`}
     >
       {icon && (
-        <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-900 text-lg">
+        <div className="mt-1 flex h-9 w-9 items-center justify-center rounded-2xl bg-slate-100 text-lg text-slate-700 dark:bg-slate-900 dark:text-slate-100">
           {icon}
         </div>
       )}
 
       <div className="flex-1 space-y-1">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
           {label}
         </p>
-        <p className="text-xl font-semibold text-slate-50">
+        <p className="text-xl font-semibold text-slate-900 dark:text-slate-50">
           {value}
         </p>
         {helperText && (
-          <p className="text-xs text-slate-400">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
             {helperText}
           </p>
         )}

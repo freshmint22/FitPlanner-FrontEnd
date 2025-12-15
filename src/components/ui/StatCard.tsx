@@ -43,7 +43,7 @@ export const StatCard = ({
           )}
         </div>
         {icon && (
-          <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-slate-900/80 ring-1 ring-slate-700/70 text-xl">
+          <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-white ring-1 ring-slate-300 text-xl dark:bg-slate-900/80 dark:ring-slate-700/70">
             {icon}
           </div>
         )}

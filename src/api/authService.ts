@@ -68,3 +68,36 @@ export const registerRequest = async (
   );
   return data;
 };
+export interface ChangePasswordPayload {
+  currentPassword: string;
+  newPassword: string;
+}
+
+export const changePasswordRequest = async (
+  payload: ChangePasswordPayload
+): Promise<{ message: string }> => {
+  const { data } = await axiosClient.patch("/users/password", payload);
+  return data;
+};
+
+export const deleteAccountRequest = async (): Promise<{ message: string }> => {
+  const { data } = await axiosClient.delete("/users/account");
+  return data;
+};
+
+export interface UpdateProfilePayload {
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  phone?: string;
+  birthDate?: string;
+  gender?: string;
+}
+
+export const updateProfileRequest = async (
+  userId: string,
+  payload: UpdateProfilePayload
+): Promise<{ message: string; data: Record<string, unknown> }> => {
+  const { data } = await axiosClient.put(`/members/${userId}`, payload);
+  return data;
+};

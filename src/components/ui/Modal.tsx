@@ -62,12 +62,12 @@ export function Modal({
 
       {/* Contenedor modal */}
       <div
-        className={`relative z-10 w-full max-w-md rounded-3xl border border-slate-700/70 bg-slate-950/90 px-5 py-4 shadow-xl shadow-black/50 backdrop-blur-md ${animationClass}`}
+        className={`relative z-10 w-full max-w-md rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-xl shadow-slate-200/80 backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-950/90 dark:shadow-black/50 ${animationClass}`}
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
             {title && (
-              <h2 className="text-sm font-semibold text-slate-50">
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                 {title}
               </h2>
             )}
@@ -80,13 +80,13 @@ export function Modal({
 
           <button
             onClick={onClose}
-            className="btn-raise rounded-full bg-slate-900/80 px-2 py-1 text-xs text-slate-300 hover:bg-slate-800"
+            className="btn-raise rounded-full border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-900/80 dark:text-slate-300 dark:hover:bg-slate-800"
           >
             ✕
           </button>
         </div>
 
-        <div className="text-sm text-slate-100">
+        <div className="text-sm text-slate-900 dark:text-slate-100">
           {children}
         </div>
       </div>
