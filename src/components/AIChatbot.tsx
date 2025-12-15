@@ -3,14 +3,14 @@ import { Loader2, AlertCircle } from 'lucide-react';
 
 interface AIChatbotProps {
   className?: string;
-  onBack?: () => void;
+  onSave?: (routine: any) => void;
 }
 
 const objectives = ['Hipertrofia', 'Fuerza', 'Pérdida de grasa', 'Resistencia', 'Tonificación'];
 const levels = ['Principiante', 'Intermedio', 'Avanzado'];
 const muscleGroups = ['Pierna', 'Glúteo', 'Espalda', 'Pecho', 'Bíceps', 'Tríceps', 'Hombro', 'Core'];
 
-const AIChatbot = ({ className = '', onBack }: AIChatbotProps) => {
+const AIChatbot = ({ className = '', onSave }: AIChatbotProps) => {
   const [objective, setObjective] = useState('');
   const [level, setLevel] = useState('');
   const [selectedGroups, setSelectedGroups] = useState<string[]>(['Pierna', 'Glúteo', 'Espalda']);
@@ -27,20 +27,40 @@ const AIChatbot = ({ className = '', onBack }: AIChatbotProps) => {
     setResult(null);
     setIsGenerating(true);
     // Simula llamada a la API de IA
-    await new Promise(resolve => setTimeout(resolve, 1200));
+    await new Promise(resolve => setTimeout(resolve, 900));
 
-    const routine = `Rutina generada:
-Objetivo: ${objective || 'No especificado'}
-Nivel: ${level || 'No especificado'}
-Días/semana: ${daysPerWeek}
-Enfoque: ${selectedGroups.join(', ') || 'General'}
-Restricciones: ${restrictions || 'Ninguna'}
+    const exercisesPool: Record<string, string[]> = {
+      Pierna: ['Sentadillas 4x8', 'Zancadas 3x12', 'Prensa 3x10'],
+      Glúteo: ['Hip thrust 4x8', 'Puente de glúteo 3x12', 'Patada de glúteo 3x15'],
+      Espalda: ['Remo con barra 4x6', 'Jalón al pecho 3x10', 'Peso muerto 3x6'],
+      Pecho: ['Press banca 4x6', 'Press inclinado 3x8', 'Aperturas 3x12'],
+      Bíceps: ['Curl barra 3x8', 'Curl martillo 3x10'],
+      Tríceps: ['Fondos 3x8', 'Extensión tríceps 3x10'],
+      Hombro: ['Press militar 4x6', 'Elevaciones laterales 3x12'],
+      Core: ['Planchas 3x60s', 'Abdominales 3x15']
+    };
 
--- Ejemplo de sesión (día 1) --
-1) Sentadillas 4x8
-2) Peso muerto 4x6
-3) Zancadas 3x12
-4) Abdominales 3x15`;
+    const dias: string[] = [];
+    for (let d = 1; d <= daysPerWeek; d++) {
+      const dayExercises: string[] = [];
+      const primary = selectedGroups[(d - 1) % selectedGroups.length];
+      const secondary = selectedGroups.length > 1 ? selectedGroups[d % selectedGroups.length] : null;
+      const poolPrimary = exercisesPool[primary] || ['Ejercicio 1 3x10'];
+      dayExercises.push(poolPrimary[(d - 1) % poolPrimary.length]);
+      if (secondary) {
+        const poolSecondary = exercisesPool[secondary] || ['Ejercicio 2 3x10'];
+        dayExercises.push(poolSecondary[(d - 1) % poolSecondary.length]);
+      }
+      // asegurar 3 ejercicios
+      if (dayExercises.length < 3) dayExercises.push(exercisesPool['Core'][0]);
+
+      const dayText = `-- Día ${d} --\n${dayExercises.map((ex, i) => `${i + 1}) ${ex}`).join('\n')}`;
+      dias.push(dayText);
+    }
+
+    const header = `Rutina generada:\nObjetivo: ${objective || 'No especificado'}\nNivel: ${level || 'No especificado'}\nDías/semana: ${daysPerWeek}\nEnfoque: ${selectedGroups.join(', ') || 'General'}\nRestricciones: ${restrictions || 'Ninguna'}\n`;
+
+    const routine = `${header}\n${dias.join('\n\n')}`;
 
     setResult(routine);
     setIsGenerating(false);
@@ -49,12 +69,7 @@ Restricciones: ${restrictions || 'Ninguna'}
   return (
     <div className={`rounded-2xl bg-white border border-slate-200 shadow-lg overflow-auto max-h-[80vh] ${className} dark:bg-slate-900/95 dark:border-slate-800` }>
       <div className="p-6">
-        <div className="mb-4 flex items-center gap-4">
-          {onBack && (
-            <button onClick={onBack} className="inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
-              ← Volver
-            </button>
-          )}
+        <div className="mb-4">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-slate-50">Crear rutina con IA</h2>
         </div>
 
@@ -104,9 +119,28 @@ Restricciones: ${restrictions || 'Ninguna'}
           </div>
 
           {result && (
-            <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 whitespace-pre-wrap">
-              {result}
-            </div>
+            <>
+              <div className="mt-4 p-4 bg-slate-50 dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-slate-100 whitespace-pre-wrap">
+                {result}
+              </div>
+              <div className="mt-4 flex gap-3">
+                <button onClick={() => {
+                  if (!onSave) return;
+                  const newRoutine = {
+                    _id: `temp-${Date.now()}`,
+                    name: `${objective || 'Rutina IA'} - ${level || 'General'}`,
+                    frequency: `${daysPerWeek} días/semana`,
+                    focus: selectedGroups.join(', '),
+                    status: 'Activa',
+                    diasPorSemana: daysPerWeek,
+                    resumen: { objetivo: objective, nivel: level, enfoque: selectedGroups, restricciones: restrictions },
+                    generatedText: result
+                  };
+                  onSave(newRoutine);
+                }} className="py-2 px-4 rounded-xl bg-emerald-600 text-white font-semibold">Guardar rutina</button>
+                <button onClick={() => { setResult(null); }} className="py-2 px-4 rounded-xl border">Cerrar vista IA</button>
+              </div>
+            </>
           )}
 
           <div className="mt-3 flex items-start gap-2 p-3 rounded-lg bg-blue-900/6 border border-blue-800/20">
