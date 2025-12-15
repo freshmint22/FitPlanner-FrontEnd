@@ -1,19 +1,34 @@
 // src/pages/ClassesPage.tsx
-import { useEffect, useState } from 'react';
-import axiosClient from '@/api/axiosClient';
-import { EditClassModal } from '@/components/modals/EditClassModal';
-import { useAuth } from '@/context/useAuth';
-
-interface Class {
-  _id: string;
-  name: string;
-  level?: string;
-  room?: string;
-  hour?: string;
-  trainer?: string;
-  capacity?: number;
-  reservations?: number;
-}
+import AIChatbot from '@/components/AIChatbot';
+const mockClasses = [
+  {
+    id: 1,
+    name: "Funcional Full Body",
+    level: "Intermedio",
+    room: "Sala 2",
+    hour: "6:00 a.m.",
+    trainer: "Laura Gómez",
+    spots: "18 / 20",
+  },
+  {
+    id: 2,
+    name: "Spinning Cardio",
+    level: "Alta intensidad",
+    room: "Sala Cardio",
+    hour: "7:30 a.m.",
+    trainer: "Carlos Ruiz",
+    spots: "15 / 18",
+  },
+  {
+    id: 3,
+    name: "Cross Training",
+    level: "Avanzado",
+    room: "Sala 1",
+    hour: "6:30 p.m.",
+    trainer: "Miguel Rojas",
+    spots: "22 / 25",
+  },
+];
 
 const ClassesPage = () => {
   const { user } = useAuth();
@@ -165,6 +180,18 @@ const ClassesPage = () => {
                 })}
               </>
             )}
+          </div>
+        </section>
+
+        {/* Asistente IA */}
+        <section className="rounded-2xl bg-slate-900/90 border border-slate-800 p-4 shadow-lg shadow-black/30">
+          <div className="mb-4">
+            <h2 className="text-sm font-semibold text-slate-50">Asistente IA</h2>
+            <p className="text-xs text-slate-400">Haz preguntas rápidas sobre clases, horarios y entrenadores.</p>
+          </div>
+
+          <div>
+            <AIChatbot />
           </div>
         </section>
       </div>
