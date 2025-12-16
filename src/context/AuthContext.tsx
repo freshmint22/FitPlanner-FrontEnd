@@ -97,6 +97,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(data.user));
     }
 
+    // Normalize user object and include membership if present
+    const normalized = data.user
+      ? {
+          id: String(data.user.id || data.user._id || ''),
+          name: data.user.name || data.user.email || 'Usuario',
+          email: data.user.email || '',
+          role: deriveRoleFromEmail(data.user.email),
+          membership: (data.user as any).membership || null,
+        }
+      : null;
+
     setState({
       token: data.accessToken ?? null,
       user: data.user
