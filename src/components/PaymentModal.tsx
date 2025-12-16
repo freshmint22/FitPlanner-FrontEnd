@@ -64,12 +64,12 @@ export default function PaymentModal({ plan, onClose, onConfirm }: Props) {
       setLoading(false);
       const result = res?.data?.data;
       // pass server result (updated member) to parent
-        onConfirm(result || { name: plan.name, price: plan.price, durationDays: plan.durationDays });
+        onConfirm(result || { id: plan.id, name: plan.name, price: plan.price, durationDays: plan.durationDays });
     } catch (err) {
       console.warn('Payment failed', err);
       setLoading(false);
         // fallback: return local result so UI can update locally
-        onConfirm({ name: plan.name, price: plan.price, durationDays: plan.durationDays });
+        onConfirm({ id: plan.id, name: plan.name, price: plan.price, durationDays: plan.durationDays });
     }
   };
 

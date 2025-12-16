@@ -2,6 +2,7 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerRequest, type Role } from "@/api/authService";
+import { parseAdminEmail } from "@/utils/adminEmail";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -32,7 +33,13 @@ const RegisterPage = () => {
       return "Ingresa un correo electrónico válido.";
     }
 
-    // No special-case validation for ADMIN role: allow any valid email.
+    // Validación para administradores: deben incluir el marcador (.gym) antes del @
+    if (role === "ADMIN") {
+      const { isAdmin } = parseAdminEmail(email);
+      if (!isAdmin) {
+        return "Para registrar un administrador escribe el correo como usuario(.gym)@gmail.com";
+      }
+    }
 
     if (password.length < 8) {
       return "La contraseña debe tener al menos 8 caracteres.";
@@ -45,7 +52,7 @@ const RegisterPage = () => {
     return null;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -72,17 +79,17 @@ const RegisterPage = () => {
     } catch (err) {
       console.error(err);
       const axiosErr = err as { response?: { data?: unknown } };
-      type ApiError = { error?: { code?: string } };
-      const apiError = axiosErr?.response?.data as ApiError | undefined;
-      if (apiError?.error?.code === "email_exists") {
-        setError("Este correo ya existe. Intenta con uno diferente.");
-      } else if (!axiosErr?.response) {
-        setError("No se pudo conectar al servidor. Intenta más tarde.");
-      } else {
-        setError(
-          "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
-        );
-      }
+      const { cleanEmail } = parseAdminEmail(email);
+      await registerRequest({
+        firstName,
+        lastName,
+        email: cleanEmail,
+        password,
+        role,
+      });
+      setError(
+        "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
+      );
     } finally {
       setLoading(false);
     }

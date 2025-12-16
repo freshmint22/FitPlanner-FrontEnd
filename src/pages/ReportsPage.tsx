@@ -264,7 +264,7 @@ const ReportsPage = () => {
                   />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px' }}
-                    formatter={(v: number, name) => [name === 'Ingresos' ? formatCurrency(v) : v, name]}
+                    formatter={(v: number | undefined, name) => [v !== undefined && name === 'Ingresos' ? formatCurrency(v) : v ?? 0, name]}
                     labelStyle={{ color: '#1e293b' }}
                   />
                   <Legend wrapperStyle={{ paddingTop: '20px' }} iconType="square" />
@@ -312,7 +312,7 @@ const ReportsPage = () => {
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number, name) => [`${v} reservas`, name]} />
+                <Tooltip formatter={(v: number | undefined, name) => [`${v ?? 0} reservas`, name]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
