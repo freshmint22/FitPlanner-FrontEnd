@@ -19,6 +19,7 @@ import UserDashboardPage from '@/pages/UserDashboard';
 import ClassesPage from '@/pages/ClassesPage';
 import RoutinesPage from '@/pages/RoutinesPage';
 import SettingsPage from '@/pages/SettingsPage';
+import CalendarPage from '@/pages/CalendarPage';
 
 // Páginas de admin
 import AdminDashboardPage from '@/pages/AdminDashboard';
@@ -51,6 +52,7 @@ export default function AppRouter() {
           <Route path="/dashboard" element={<UserDashboardPage />} />
           <Route path="/my-membership" element={<MembershipsPage />} />
           <Route path="/classes" element={<ClassesPage />} />
+          <Route path="/classes/calendar" element={<CalendarPage />} />
           <Route path="/routines" element={<RoutinesPage />} />
           <Route path="/settings" element={<SettingsPage />} />
 

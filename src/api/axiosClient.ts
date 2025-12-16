@@ -1,4 +1,7 @@
 import axios from 'axios';
+// Debug: show resolved API base URL at runtime
+// eslint-disable-next-line no-console
+console.log('VITE_API_BASE_URL=', import.meta.env.VITE_API_BASE_URL);
 
 const axiosClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL,
