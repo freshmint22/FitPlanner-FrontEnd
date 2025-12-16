@@ -34,14 +34,23 @@ function parseExercisesFromDias(dias: any[] | undefined): Exercise[] {
   if (!dias || !Array.isArray(dias) || dias.length === 0) return [];
   // try to parse first day block
   const first = dias[0];
+  // If the day block is an object with an 'ejercicios' array, map those
+  if (first && typeof first === 'object' && Array.isArray((first as any).ejercicios)) {
+    return (first as any).ejercicios.map((e: any) => {
+      if (typeof e === 'string') return { name: e };
+      if (e && typeof e === 'object') return { name: e.name || e.nombre || String(e) };
+      return { name: String(e) };
+    });
+  }
+
   const text = typeof first === 'string' ? first : (first.text || JSON.stringify(first));
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
   // keep lines that look like "1) Name ..." or just bullets
   const ex: Exercise[] = lines
-    .filter(l => /^\d+\)/.test(l) || /^[\-••]/.test(l) || l.length > 0)
+    .filter(l => /^\d+\)/.test(l) || /^[\-•]/.test(l) || l.length > 0)
     .map(l => {
       // strip leading "1)"
-      const name = l.replace(/^\d+\)\s*/, '').replace(/^[-•]\s*/, '');
+      const name = l.replace(/^\d+\)\s*/, '').replace(/^[\-•]\s*/, '');
       return { name };
     });
   return ex;
@@ -84,6 +93,22 @@ export default function RoutineDetailsModal({ routine, onClose, onStart, onSave 
     return (fromText && fromText.length > 0) ? fromText : (exercisesFromDias || []);
   })();
 
+  // If parsedAll contains generic labels like "Ejercicio 1" and we have generatedText,
+  // try to replace them with more descriptive names extracted from generatedText.
+  const refinedParsedAll = React.useMemo(() => {
+    const isGeneric = (name: string) => /^\s*ejercicio\s*\d+/i.test(name || '');
+    const hasGeneric = parsedAll.some(p => isGeneric(p.name));
+    if (!hasGeneric) return parsedAll;
+    const fromText = parseFromGeneratedText((routine as any)?.generatedText || undefined);
+    if (!fromText || fromText.length === 0) return parsedAll;
+    // map generics by index to more descriptive parsed names when possible
+    return parsedAll.map((p, i) => {
+      const candidate = fromText[i] || fromText.find(f => (f.name || '').toLowerCase().indexOf((p.name || '').toLowerCase().replace(/ejercicio\s*\d+/i, '').trim()) !== -1) || null;
+      if (candidate && candidate.name && !isGeneric(candidate.name)) return { ...p, name: candidate.name, sets: candidate.sets || p.sets, rest: candidate.rest || p.rest };
+      return p;
+    });
+  }, [parsedAll, (routine as any)?.generatedText]);
+
   // detect a restriction entry like "Restricciones: me duele el brazo" and remove it from the visible exercises
   const restrictionText = React.useMemo(() => {
     const found = parsedAll.find(ex => /^\s*restricciones?[:\-]/i.test(ex.name));
@@ -92,7 +117,7 @@ export default function RoutineDetailsModal({ routine, onClose, onStart, onSave 
     return m ? m[1].trim() : null;
   }, [routine?._id]);
 
-  const visibleExercises = React.useMemo(() => parsedAll.filter(ex => !/^\s*restricciones?[:\-]/i.test(ex.name)), [parsedAll]);
+  const visibleExercises = React.useMemo(() => refinedParsedAll.filter(ex => !/^\s*restricciones?[:\-]/i.test(ex.name)), [refinedParsedAll]);
 
   const [checked, setChecked] = React.useState<Record<number, boolean>>(() => {
     const map: Record<number, boolean> = {};
@@ -142,6 +167,45 @@ export default function RoutineDetailsModal({ routine, onClose, onStart, onSave 
   }, [restrictionText, nivel, objetivo, enfoque]);
 
   
+  const [refreshingAI, setRefreshingAI] = React.useState(false);
+
+  // If visible exercises are generic placeholders (Ejercicio 1) and we have a real routine id,
+  // ask backend to refresh details from AI and update the modal optimistically.
+  React.useEffect(() => {
+    let cancelled = false;
+    const hasGeneric = visibleExercises.some(ex => /^\s*ejercicio\s*\d+/i.test(ex.name || ''));
+    if (!hasGeneric) return;
+    const routineId = (routine as any)?._id;
+    if (!routineId) return;
+
+    (async () => {
+      try {
+        setRefreshingAI(true);
+        const res = await axiosClient.post(`/routines/${routineId}/refresh-ai`);
+        if (cancelled) return;
+        const updated = res?.data?.data || res?.data;
+        if (updated) {
+          // update routine object passed as prop (caller holds shallow reference)
+          (routine as any).dias = updated.dias || (routine as any).dias;
+          (routine as any).generatedText = updated.generatedText || (routine as any).generatedText;
+          // recompute parsed exercises and reset checked state
+          const newList = parseFromGeneratedText((routine as any).generatedText);
+          const exList = (newList && newList.length > 0) ? newList : parseExercisesFromDias((routine as any).dias);
+          const map: Record<number, boolean> = {};
+          exList.forEach((ex, i) => map[i] = !!(ex as any).done);
+          setChecked(map);
+          initialCheckedRef.current = { ...map };
+        }
+      } catch (err) {
+        console.warn('AI refresh failed', err);
+      } finally {
+        setRefreshingAI(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routine?._id]);
 
   const modalContent = (
     <div className="fixed inset-0 z-[2147483646] flex items-center justify-center pointer-events-auto">

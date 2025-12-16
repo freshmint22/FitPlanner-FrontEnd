@@ -29,7 +29,7 @@ const RoutinesPage = () => {
   
 
   // Derived dashboard metrics from current routines state
-  const activeCount = routines.filter(r => r.status === 'Activa').length;
+  const activeCount = routines.filter(r => (r.exercises && Array.isArray(r.exercises) && r.exercises.some((e: any) => !!e.done))).length;
   const plannedDays = routines.reduce((sum, r) => {
     let n = 0;
     if (r.frequency) {
@@ -93,34 +93,118 @@ const RoutinesPage = () => {
         else items = [data];
 
         // normalizar items desde backend
-        const normalizedFromServer = items.map((r: any) => ({
-          _id: r._id,
-          name: r.name,
-          frequency: r.frequency,
-          focus: r.focus,
-          status: r.status || 'Activa',
-          dias: r.dias,
-          objetivo: r.objetivo,
-          nivel: r.nivel,
-          exercises: r.exercises
-        }));
+        const normalizedFromServer = items.map((r: any) => {
+          // build exercises array from possible shapes (r.exercises as strings/objects or r.dias[].ejercicios)
+          const exercisesArr: any[] = [];
+          if (Array.isArray(r.exercises)) {
+            for (const e of r.exercises) {
+              if (!e) continue;
+              if (typeof e === 'string') exercisesArr.push({ name: e, sets: undefined, rest: undefined, done: false });
+              else if (typeof e === 'object') exercisesArr.push({ name: e.name || e.nombre || String(e), sets: e.sets, rest: e.rest || e.descanso, done: !!e.done });
+              else exercisesArr.push({ name: String(e), done: false });
+            }
+            // If exercises are generic placeholders like "Ejercicio 1" and generatedText exists,
+            // try to extract better names from generatedText and replace them.
+            const hasGeneric = exercisesArr.some(ex => /^\s*ejercicio\s*\d+/i.test(ex.name || ''));
+            const genText = r.generatedText || (r as any).text || (r.resumen && r.resumen.text);
+            if (hasGeneric && genText) {
+              const lines = String(genText).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+              const parsedNames: string[] = [];
+              for (const line of lines) {
+                if (/^Rutina|^Objetivo:|^Nivel:|^Días\/?semana:|^Enfoque:|^-- Día/i.test(line)) continue;
+                const cleaned = line.replace(/^\d+\)\s*/, '').replace(/^[\-•]\s*/, '');
+                const nameOnly = cleaned.replace(/\|?\s*Descanso[:]?.*$/i, '').replace(/(\d+x\d+)/i, '').replace(/\(.*?\)/g, '').trim();
+                if (nameOnly) parsedNames.push(nameOnly);
+              }
+              if (parsedNames.length >= exercisesArr.length) {
+                for (let i = 0; i < exercisesArr.length; i++) {
+                  if (/^\s*ejercicio\s*\d+/i.test(exercisesArr[i].name || '')) {
+                    exercisesArr[i].name = parsedNames[i] || exercisesArr[i].name;
+                  }
+                }
+              }
+            }
+          } else if (Array.isArray(r.dias)) {
+            const day = r.dias.find((d: any) => Array.isArray(d.ejercicios) && d.ejercicios.length > 0) || r.dias[0];
+              if (day && Array.isArray(day.ejercicios)) {
+                for (const e of day.ejercicios) {
+                  if (!e) continue;
+                  if (typeof e === 'string') exercisesArr.push({ name: e, sets: undefined, rest: undefined, done: false });
+                  else if (typeof e === 'object') exercisesArr.push({ name: e.name || e.nombre || String(e), sets: e.sets, rest: e.rest || e.descanso, done: !!e.done });
+                  else exercisesArr.push({ name: String(e), done: false });
+                }
+
+                // If the AI stored placeholder labels like "Ejercicio 1" and there's a generatedText
+                // with better names, try to extract them and replace the generic labels.
+                const hasGeneric = exercisesArr.some(ex => /^\s*ejercicio\s*\d+/i.test(ex.name || ''));
+                const genText = r.generatedText || (r as any).text || (r.resumen && r.resumen.text);
+                if (hasGeneric && genText) {
+                  const lines = String(genText).split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+                  const parsedNames: string[] = [];
+                  for (const line of lines) {
+                    if (/^Rutina|^Objetivo:|^Nivel:|^Días\/?semana:|^Enfoque:|^-- Día/i.test(line)) continue;
+                    const cleaned = line.replace(/^\d+\)\s*/, '').replace(/^[\-•]\s*/, '');
+                    const nameOnly = cleaned.replace(/\|?\s*Descanso[:]?.*$/i, '').replace(/(\d+x\d+)/i, '').replace(/\(.*?\)/g, '').trim();
+                    if (nameOnly) parsedNames.push(nameOnly);
+                  }
+                  if (parsedNames.length >= exercisesArr.length) {
+                    for (let i = 0; i < exercisesArr.length; i++) {
+                      if (/^\s*ejercicio\s*\d+/i.test(exercisesArr[i].name || '')) {
+                        exercisesArr[i].name = parsedNames[i] || exercisesArr[i].name;
+                      }
+                    }
+                  }
+                }
+              }
+          }
+
+          return {
+            _id: r._id,
+            name: r.name || r.nombre,
+            frequency: r.frequency,
+            focus: r.focus,
+            status: r.status || 'Activa',
+            dias: r.dias,
+            objetivo: r.objetivo,
+            nivel: r.nivel,
+            exercises: exercisesArr
+          };
+        });
 
         // cargar rutinas guardadas localmente (fallback cuando el POST al backend falló)
         let normalizedLocal: any[] = [];
         try {
           const stored = localStorage.getItem('fitplanner.rutinas');
           const arr = stored ? JSON.parse(stored) : [];
-          normalizedLocal = arr.map((r: any) => ({
-            _id: r._id || r.id || undefined,
-            name: r.name || r.nombre || r.nombreRutina || 'Rutina IA',
-            frequency: r.frequency || (r.diasPorSemana ? `${r.diasPorSemana} días/semana` : undefined),
-            focus: r.focus || r.enfoque || '',
-            status: r.status || 'Activa',
-            dias: r.dias || r.diasPorSemana || r.dias,
-            objetivo: r.objetivo || r.resumen?.objetivo || r.objetivo,
-            nivel: r.nivel || r.resumen?.nivel,
-            exercises: r.exercises || []
-          }));
+          normalizedLocal = arr.map((r: any) => {
+            const exercisesArr: any[] = [];
+            if (Array.isArray(r.exercises)) {
+              for (const e of r.exercises) {
+                if (typeof e === 'string') exercisesArr.push({ name: e, done: !!e.done });
+                else if (typeof e === 'object') exercisesArr.push({ name: e.name || e.nombre || String(e), sets: e.sets, rest: e.rest, done: !!e.done });
+              }
+            } else if (Array.isArray(r.dias)) {
+              const day = r.dias.find((d: any) => Array.isArray(d.ejercicios) && d.ejercicios.length > 0) || r.dias[0];
+              if (day && Array.isArray(day.ejercicios)) {
+                for (const e of day.ejercicios) {
+                  if (typeof e === 'string') exercisesArr.push({ name: e, done: false });
+                  else if (typeof e === 'object') exercisesArr.push({ name: e.name || e.nombre || String(e), done: !!e.done });
+                }
+              }
+            }
+
+            return {
+              _id: r._id || r.id || undefined,
+              name: r.name || r.nombre || r.nombreRutina || 'Rutina IA',
+              frequency: r.frequency || (r.diasPorSemana ? `${r.diasPorSemana} días/semana` : undefined),
+              focus: r.focus || r.enfoque || '',
+              status: r.status || 'Activa',
+              dias: r.dias || r.diasPorSemana || r.dias,
+              objetivo: r.objetivo || r.resumen?.objetivo || r.objetivo,
+              nivel: r.nivel || r.resumen?.nivel,
+              exercises: exercisesArr
+            };
+          });
         } catch (e) {
           // ignore parse errors
           normalizedLocal = [];
@@ -286,14 +370,16 @@ const RoutinesPage = () => {
                       </p>
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-300">
-                      <span
-                        className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                          routine.status === "Activa"
-                            ? "bg-emerald-500/10 text-emerald-400"
-                            : "bg-slate-600/20 text-slate-300"
-                        }`}>
-                        {routine.status}
-                      </span>
+                      {(() => {
+                        const hasExercises = Array.isArray(routine.exercises) && routine.exercises.length > 0;
+                        const completed = hasExercises && routine.exercises.some((e: any) => !!e.done);
+                        const statusText = completed ? 'Activa' : (hasExercises ? 'Inactiva' : (routine.status || 'Inactiva'));
+                        return (
+                          <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${completed ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-600/10 text-rose-400'}`}>
+                            {statusText}
+                          </span>
+                        );
+                      })()}
                           <button onClick={() => setRoutineToDelete(routine)} title="Eliminar" className="rounded-lg border border-transparent bg-white px-2 py-1 text-xs text-red-500 hover:bg-red-50 dark:hover:bg-slate-800">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M9 7V4a1 1 0 011-1h4a1 1 0 011 1v3" /></svg>
                           </button>
