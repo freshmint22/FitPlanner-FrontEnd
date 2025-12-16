@@ -4,14 +4,7 @@ import { useAuth } from '@/context/useAuth';
 import axiosClient from '@/api/axiosClient';
 import PaymentModal from '@/components/PaymentModal';
 import ConfirmModal from '@/components/ConfirmModal';
-
-type Membership = {
-  name?: string;
-  price?: number | string;
-  duration?: number | string;
-  endDate?: string;
-  status?: string;
-};
+import { Modal } from '@/components/ui/Modal';
 
 type Plan = {
   id: number;
@@ -19,7 +12,7 @@ type Plan = {
   price: string;
   description: string;
   perks: string[];
-  tag?: "Popular" | "Actual";
+  tag?: 'Popular' | 'Actual';
 };
 
 type Payment = {
@@ -27,7 +20,33 @@ type Payment = {
   date: string;
   invoice: string;
   amount: string;
-  status: "Pagado" | "Pendiente";
+  status: 'Pagado' | 'Pendiente';
+  planName?: string;
+  method?: string;
+};
+
+type AdminPlan = {
+  _id: string;
+  nombre: string;
+  precio: number;
+  descripcion: string;
+  beneficios: string[];
+  estado: 'activo' | 'inactivo';
+  popular?: boolean;
+};
+
+type AdminPayment = {
+  _id: string;
+  memberId: string;
+  amount: number;
+  date: string;
+  planName?: string;
+  method?: string;
+  member?: {
+    firstName?: string;
+    lastName?: string;
+    email?: string;
+  } | null;
 };
 
 type CurrentPlan = {
@@ -42,14 +61,16 @@ type CurrentPlan = {
 
 const MembershipsPage = () => {
   const { user } = useAuth();
+  const isAdmin = (user as any)?.role?.toUpperCase?.() === 'ADMIN' || (user as any)?.rol === 'ADMIN';
+
   const [currentPlan, setCurrentPlan] = useState<CurrentPlan>({
-    name: "Sin membresía",
-    price: "$0",
+    name: 'Sin membresía',
+    price: '$0',
     daysLeft: 0,
     totalDays: 0,
-    nextPayment: "N/A",
-    paymentMethod: "N/A",
-    status: "Inactivo",
+    nextPayment: 'N/A',
+    paymentMethod: 'N/A',
+    status: 'Inactivo',
   });
 
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
@@ -59,120 +80,269 @@ const MembershipsPage = () => {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showRequireCancelConfirm, setShowRequireCancelConfirm] = useState(false);
 
+  const [adminPlans, setAdminPlans] = useState<AdminPlan[]>([]);
+  const [adminPayments, setAdminPayments] = useState<AdminPayment[]>([]);
+  const [editingPlan, setEditingPlan] = useState<AdminPlan | null>(null);
+  const [planSaving, setPlanSaving] = useState(false);
+  const [adminLoading, setAdminLoading] = useState(false);
+  const [planToDelete, setPlanToDelete] = useState<AdminPlan | null>(null);
+  const [planDeleting, setPlanDeleting] = useState(false);
+  const [planForm, setPlanForm] = useState({
+    nombre: '',
+    precio: 0,
+    descripcion: '',
+    beneficios: [''],
+    estado: 'activo' as 'activo' | 'inactivo',
+    popular: false,
+  });
+
+  const defaultAvailablePlans: Plan[] = [
+    {
+      id: 1,
+      name: 'Plan mensual',
+      price: '$50.000',
+      description: 'Acceso ilimitado al gimnasio durante 30 días.',
+      perks: ['Acceso total a zonas de cardio y fuerza', 'Clases grupales básicas', 'Soporte en recepción'],
+      tag: 'Popular',
+    },
+    {
+      id: 2,
+      name: 'Plan bimensual',
+      price: '$80.000',
+      description: 'Dos meses de entrenamiento con precio preferencial.',
+      perks: ['Acceso total', 'Clases grupales ilimitadas', 'Evaluación física inicial'],
+    },
+    {
+      id: 3,
+      name: 'Plan semestral',
+      price: '$150.000',
+      description: 'Seis meses con precio más conveniente.',
+      perks: ['Acceso total', 'Clases premium', 'Asesoría personalizada mensual'],
+    },
+  ];
+
+  const loadAdminData = async () => {
+    if (!isAdmin) return;
+    setAdminLoading(true);
+    try {
+      const [plansRes, paymentsRes] = await Promise.all([
+        axiosClient.get('/plans').catch(() => ({ data: { data: [] } })),
+        axiosClient.get('/pagos/admin').catch(() => ({ data: { data: [] } })),
+      ]);
+
+      const plans = plansRes?.data?.data || plansRes?.data || [];
+      setAdminPlans(Array.isArray(plans) ? plans : []);
+
+      const rawPayments =
+        paymentsRes?.data?.data ?? paymentsRes?.data?.payments ?? paymentsRes?.data ?? [];
+      setAdminPayments(Array.isArray(rawPayments) ? rawPayments : []);
+    } catch (error) {
+      console.error('Error cargando datos de admin', error);
+    } finally {
+      setAdminLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const memb = user?.membership as Membership | undefined | null;
-        if (memb && (memb.endDate || memb.duration)) {
-          const endDate = memb.endDate ? new Date(memb.endDate) : null;
-          const today = new Date();
-          const totalDays = Number(memb.duration) || 30;
-          const daysLeft = endDate ? Math.ceil((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)) : Math.max(0, totalDays);
-          const priceNumber = Number(memb.price) || 0;
+    if (isAdmin) {
+      loadAdminData();
+      return;
+    }
 
-          setCurrentPlan({
-            name: memb.name || "Sin plan",
-            price: `$${priceNumber.toLocaleString()} / mes`,
-            daysLeft: Math.max(0, daysLeft),
-            totalDays,
-            nextPayment: endDate ? endDate.toLocaleDateString() : "N/A",
-            paymentMethod: "•••• ****",
-            status: (endDate && daysLeft > 0) || memb.status === 'active' ? "Activo" : "Vencido",
-          });
-        } else {
-          setCurrentPlan({
-            name: "Sin membresía",
-            price: "$0",
-            daysLeft: 0,
-            totalDays: 0,
-            nextPayment: "N/A",
-            paymentMethod: "N/A",
-            status: "Inactivo",
-          });
+    const sortedDefaults = [...defaultAvailablePlans].sort((a, b) => {
+      const toNumber = (p: Plan) => Number(String(p.price).replace(/[^0-9]/g, '')) || 0;
+      return toNumber(a) - toNumber(b);
+    });
+    setAvailablePlans(sortedDefaults);
+
+    if ((user as any)?.membership) {
+      const m = (user as any).membership;
+      const daysLeft = m.endDate
+        ? Math.max(0, Math.ceil((new Date(m.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+        : m.duration || 0;
+      setCurrentPlan({
+        name: m.name || 'Plan',
+        price: m.price ? `$${Number(m.price).toLocaleString()}` : '$0',
+        daysLeft,
+        totalDays: m.duration || 30,
+        nextPayment: m.endDate ? new Date(m.endDate).toLocaleDateString() : 'N/A',
+        paymentMethod: m.paymentMethod || '•••• ****',
+        status: 'Activo',
+      });
+    } else {
+      setCurrentPlan((prev) => ({ ...prev, name: 'Sin membresía', price: '$0', status: 'Inactivo' }));
+    }
+
+    axiosClient
+      .get('/pagos')
+      .then((paymentsRes) => {
+        const payments = (paymentsRes?.data?.data || []).map((p: any, idx: number) => ({
+          id: idx + 1,
+          date: new Date(p.date).toLocaleDateString(),
+          invoice: `#INV-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+          amount: `$${Number(p.amount || 0).toLocaleString()}`,
+          status: 'Pagado',
+          planName: p.planName || '',
+          method: p.method || '',
+        }));
+        if (payments.length) {
+          setPaymentsHistory(payments);
         }
+      })
+      .catch(() => {});
+  }, [isAdmin, user]);
 
-        const plansRes = await axiosClient.get('/plans/activos').catch(() => ({ data: [] }));
-        if (plansRes.data && plansRes.data.length > 0) {
-          setAvailablePlans(plansRes.data);
-        } else {
-          setAvailablePlans([
-            {
-              id: 1,
-              name: "Plan Básico",
-              price: "$50.000 / mes",
-              description: "Acceso general al gimnasio por 30 días.",
-              perks: [
-                "Acceso a zona de pesas",
-                "Acceso a máquinas cardiovasculares",
-                "Horario de 6:00 a 22:00",
-                "1 rutina personalizada al mes",
-              ],
-            },
-            {
-              id: 2,
-              name: "Plan Premium",
-              price: "$80.000 / mes",
-              description: "Plan mensual más popular para usuarios frecuentes.",
-              perks: [
-                "Todo lo incluido en Básico",
-                "Acceso a todas las clases grupales",
-                "Acceso 24/7",
-                "2 rutinas personalizadas al mes",
-                "Evaluación física mensual",
-              ],
-              tag: user?.membership?.name === "Plan Premium" ? "Actual" : "Popular",
-            },
-            {
-              id: 3,
-              name: "Plan Semestral",
-              price: "$150.000",
-              description: "Paga 6 meses y ahorra (180 días de acceso).",
-              perks: [
-                "Todo lo incluido en Premium",
-                "Ahorro considerable vs plan mensual",
-                "Acceso por 6 meses completos",
-                "Evaluaciones trimestrales",
-              ],
-              tag: user?.membership?.name === "Plan Semestral" ? "Actual" : undefined,
-            },
-          ]);
-        }
+  const renderAdminView = (): JSX.Element => {
+    const sortedAdminPlans = [...adminPlans].sort((a, b) => (Number(a.precio) || 0) - (Number(b.precio) || 0));
 
-        const paymentsRes = await axiosClient.get('/pagos').catch(() => ({ data: { data: [] } }));
-        const payments = (paymentsRes.data && paymentsRes.data.data) || [];
-        if (payments && payments.length > 0) {
-          setPaymentsHistory(payments.map((p: any, idx: number) => {
-            const dateStr = (p.date as string) || new Date().toISOString();
-            const amountNum = Number(p.amount) || 0;
-            return {
-              id: idx + 1,
-              date: new Date(dateStr).toLocaleDateString(),
-              invoice: `#INV-${new Date(dateStr).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
-              amount: `$${amountNum.toLocaleString()}`,
-              status: "Pagado",
-            } as Payment;
-          }));
-        }
-      } catch (error) {
-        console.error('Error fetching memberships data:', error);
-      }
-    };
+    return (
+      <div className="flex flex-col gap-6 page-fade-in">
+        <header className="space-y-1">
+          <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
+            Administración
+          </p>
+          <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-50">
+            Membresías
+          </h1>
+          <p className="text-sm text-slate-600 dark:text-slate-400">
+            Edita precios, beneficios y consulta el historial de pagos global (Mongo).
+          </p>
+        </header>
 
-    fetchData();
-  }, [user]);
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+          <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">Planes</h2>
+              <p className="text-xs text-slate-600 dark:text-slate-400">Editar valores y características que ven los usuarios.</p>
+            </div>
+            {adminLoading && <span className="text-xs text-slate-500">Cargando...</span>}
+          </div>
+
+          {sortedAdminPlans.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+              No hay planes en Mongo todavía.
+            </div>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-3">
+              {sortedAdminPlans.map((plan) => (
+                <div
+                  key={plan._id}
+                  className="flex h-full flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-base font-semibold text-slate-900 dark:text-slate-50">{plan.nombre}</p>
+                      <p className="text-sm font-semibold text-emerald-600 dark:text-emerald-300">
+                        ${Number(plan.precio || 0).toLocaleString()} / mes
+                      </p>
+                      <p className="text-xs text-slate-600 dark:text-slate-400">{plan.descripcion}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-1">
+                      <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${plan.estado === 'activo' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300' : 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'}`}>
+                        {plan.estado === 'activo' ? 'Activo' : 'Inactivo'}
+                      </span>
+                      {plan.popular && (
+                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-700 dark:bg-sky-500/10 dark:text-sky-300">
+                          Popular
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+                    {plan.beneficios?.map((b) => (
+                      <li key={b} className="flex items-start gap-2">
+                        <span className="mt-[3px] h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                        <span>{b}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-auto flex items-center justify-between gap-2 pt-2">
+                    <button
+                      onClick={() => openEditPlan(plan)}
+                      className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow hover:from-blue-600 hover:to-emerald-500"
+                    >
+                      Editar plan
+                    </button>
+                    <button
+                      onClick={() => requestDeletePlan(plan)}
+                      className="rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 dark:border-red-500/40 dark:text-red-300 dark:hover:bg-red-500/10"
+                    >
+                      Eliminar
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+          <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+            Historial de pagos (todos)
+          </h2>
+          <p className="text-xs text-slate-600 dark:text-slate-400">
+            Pagos registrados en Mongo para cualquier miembro.
+          </p>
+
+          <div className="mt-4 space-y-3">
+            {adminPayments.length === 0 && (
+              <div className="rounded-xl border border-dashed border-slate-300 p-4 text-sm text-slate-600 dark:border-slate-700 dark:text-slate-300">
+                Aún no hay pagos registrados en la base de datos.
+              </div>
+            )}
+
+            {adminPayments.map((payment) => (
+              <div
+                key={payment._id}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100"
+              >
+                <div className="space-y-0.5">
+                  <p className="text-xs text-slate-600 dark:text-slate-400">
+                    {new Date(payment.date).toLocaleDateString()}
+                  </p>
+                  <p className="text-xs text-slate-500 dark:text-slate-500">
+                    {payment.member?.firstName || payment.member?.lastName ? `${payment.member?.firstName || ''} ${payment.member?.lastName || ''}`.trim() : 'Miembro' }
+                    {payment.member?.email ? ` • ${payment.member.email}` : ''}
+                  </p>
+                  <p className="text-[11px] text-slate-500 dark:text-slate-500">
+                    {payment.planName ? `Concepto: ${payment.planName}` : ''}
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                    ${Number(payment.amount || 0).toLocaleString()}
+                  </span>
+                  <div className="flex flex-col items-end gap-1 text-[11px] text-slate-600 dark:text-slate-300">
+                    <span className="rounded-full bg-slate-100 px-2 py-0.5 font-semibold text-slate-700 dark:bg-slate-800 dark:text-slate-200">
+                      {payment.method || '—'}
+                    </span>
+                    {payment.member?.email && (
+                      <span className="text-[11px] text-slate-500 dark:text-slate-500">Pago por: {payment.member.email}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  };
 
   const progressPercent =
     currentPlan.totalDays > 0 ? (currentPlan.daysLeft / currentPlan.totalDays) * 100 : 0;
 
   const handlePaymentConfirm = async (result: any) => {
     try {
-      // if result comes from server (updated user), use it
       let userResult = result;
       if (result && result.purchaseResult) userResult = result.purchaseResult;
 
       if (userResult && userResult.membership) {
         const m = userResult.membership;
-        const daysLeft = m.endDate ? Math.max(0, Math.ceil((new Date(m.endDate).getTime() - Date.now()) / (1000*60*60*24))) : (m.duration || 0);
+        const daysLeft = m.endDate ? Math.max(0, Math.ceil((new Date(m.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24))) : (m.duration || 0);
         setCurrentPlan({
           name: m.name || selectedPlanToPurchase?.name || 'Plan',
           price: m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0'),
@@ -183,24 +353,22 @@ const MembershipsPage = () => {
           status: 'Activo',
         });
 
-        setAvailablePlans(prev => prev.map(p => ({ ...p, tag: (selectedPlanToPurchase && p.id === selectedPlanToPurchase.id) ? 'Actual' : undefined })));
+        setAvailablePlans((prev) => prev.map((p) => ({ ...p, tag: (selectedPlanToPurchase && p.id === selectedPlanToPurchase.id) ? 'Actual' : undefined })));
 
-        // Refresh payments from backend to ensure canonical history (persisted in Mongo)
         try {
           const paymentsRes = await axiosClient.get('/pagos').catch(() => ({ data: { data: [] } }));
           const payments = (paymentsRes.data && paymentsRes.data.data) || [];
           if (payments.length > 0) {
             setPaymentsHistory(payments.map((p: any, idx: number) => ({ id: idx + 1, date: new Date(p.date).toLocaleDateString(), invoice: `#INV-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`, amount: `$${Number(p.amount).toLocaleString()}`, status: 'Pagado', planName: p.planName || m.name, method: p.method || 'Simulado' })));
           } else {
-            const newPayment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
-            setPaymentsHistory(prev => [newPayment, ...prev]);
+            const newPayment: Payment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
+            setPaymentsHistory((prev) => [newPayment, ...prev]);
           }
         } catch (e) {
-          const newPayment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
-          setPaymentsHistory(prev => [newPayment, ...prev]);
+          const newPayment: Payment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
+          setPaymentsHistory((prev) => [newPayment, ...prev]);
         }
         try {
-          // persist updated user in localStorage so membership survives reload
           if (typeof window !== 'undefined' && userResult) {
             localStorage.setItem('user', JSON.stringify(userResult));
           }
@@ -208,15 +376,14 @@ const MembershipsPage = () => {
           console.warn('Failed to persist user to localStorage', e);
         }
       } else if (result && result.name) {
-        // fallback local behavior
         const plan = result as any;
         const duration = plan.durationDays || (plan.id === 3 ? 180 : 30);
         const today = new Date();
         const end = new Date(today.getTime() + duration * 24 * 60 * 60 * 1000);
         const cp = { name: plan.name, price: plan.price, daysLeft: duration, totalDays: duration, nextPayment: end.toLocaleDateString(), paymentMethod: 'N/A', status: 'Activo' };
         setCurrentPlan(cp);
-        const newPayment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: plan.price, status: 'Pagado', planName: plan.name, method: 'Simulado' };
-        setPaymentsHistory(prev => [newPayment, ...prev]);
+        const newPayment: Payment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: plan.price, status: 'Pagado', planName: plan.name, method: 'Simulado' };
+        setPaymentsHistory((prev) => [newPayment, ...prev]);
         try {
           if (typeof window !== 'undefined') {
             const fakeUser = Object.assign({}, user || {}, { membership: { name: plan.name, price: plan.price, duration: duration, endDate: end.toISOString() } });
@@ -270,17 +437,16 @@ const MembershipsPage = () => {
     if (!w) return;
     w.document.write(html);
     w.document.close();
-    // Give the window a moment to render, then trigger print (user can save as PDF)
     setTimeout(() => { w.focus(); w.print(); }, 300);
   };
 
   const cancelMembership = async () => {
     try {
       const res = await axiosClient.post('/plans/cancel');
-      const user = res?.data?.data;
-      if (user && !user.membership) {
+      const userResult = res?.data?.data;
+      if (userResult && !userResult.membership) {
         setCurrentPlan({ name: 'Sin membresía', price: '$0', daysLeft: 0, totalDays: 0, nextPayment: 'N/A', paymentMethod: 'N/A', status: 'Inactivo' });
-        setAvailablePlans(prev => prev.map(p => ({ ...p, tag: undefined })));
+        setAvailablePlans((prev) => prev.map((p) => ({ ...p, tag: undefined })));
         try {
           if (typeof window !== 'undefined') {
             const stored = localStorage.getItem('user');
@@ -293,7 +459,6 @@ const MembershipsPage = () => {
         } catch (e) {
           console.warn('Failed to update localStorage after cancel', e);
         }
-        // Refresh payments list from backend so history remains intact and canonical
         try {
           const paymentsRes = await axiosClient.get('/pagos').catch(() => ({ data: { data: [] } }));
           const payments = (paymentsRes.data && paymentsRes.data.data) || [];
@@ -312,9 +477,205 @@ const MembershipsPage = () => {
     }
   };
 
+  const openEditPlan = (plan: AdminPlan) => {
+    setEditingPlan(plan);
+    setPlanForm({
+      nombre: plan.nombre,
+      precio: plan.precio,
+      descripcion: plan.descripcion,
+      beneficios: plan.beneficios?.length ? plan.beneficios : [''],
+      estado: plan.estado,
+      popular: Boolean(plan.popular),
+    });
+  };
+
+  const handlePlanField = (field: keyof typeof planForm, value: any) => {
+    setPlanForm((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleBeneficioChange = (idx: number, value: string) => {
+    setPlanForm((prev) => {
+      const next = [...prev.beneficios];
+      next[idx] = value;
+      return { ...prev, beneficios: next };
+    });
+  };
+
+  const addBeneficio = () => {
+    setPlanForm((prev) => ({ ...prev, beneficios: [...prev.beneficios, ''] }));
+  };
+
+  const removeBeneficio = (idx: number) => {
+    setPlanForm((prev) => ({
+      ...prev,
+      beneficios: prev.beneficios.filter((_, i) => i !== idx),
+    }));
+  };
+
+  const savePlanChanges = async () => {
+    if (!editingPlan) return;
+
+    const beneficios = planForm.beneficios.map((b) => b.trim()).filter(Boolean);
+    if (!planForm.nombre.trim() || !planForm.descripcion.trim() || !beneficios.length) return;
+
+    const payload = {
+      nombre: planForm.nombre.trim(),
+      descripcion: planForm.descripcion.trim(),
+      precio: Number(planForm.precio) || 0,
+      beneficios,
+      estado: planForm.estado,
+      popular: planForm.popular,
+    };
+
+    setPlanSaving(true);
+    try {
+      const res = await axiosClient.put(`/plans/${editingPlan._id}`, payload);
+      const updated = res?.data?.data || res?.data || payload;
+      setAdminPlans((prev) => prev.map((p) => (p._id === editingPlan._id ? { ...p, ...updated } : p)));
+      setEditingPlan(null);
+    } catch (error) {
+      console.error('No se pudo actualizar el plan', error);
+    } finally {
+      setPlanSaving(false);
+    }
+  };
+
+  const requestDeletePlan = (plan: AdminPlan) => {
+    setPlanToDelete(plan);
+  };
+
+  const deletePlanConfirmed = async () => {
+    if (!planToDelete) return;
+    setPlanDeleting(true);
+    try {
+      await axiosClient.delete(`/plans/${planToDelete._id}`);
+      setAdminPlans((prev) => prev.filter((p) => p._id !== planToDelete._id));
+      setPlanToDelete(null);
+    } catch (error) {
+      console.error('No se pudo eliminar el plan', error);
+    } finally {
+      setPlanDeleting(false);
+    }
+  };
+
+  if (isAdmin) {
+    return (
+      <>
+        {renderAdminView()}
+
+        {editingPlan && (
+          <Modal isOpen={!!editingPlan} onClose={() => setEditingPlan(null)} title={`Editar plan: ${editingPlan?.nombre || ''}`}>
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Nombre</label>
+                  <input
+                    value={planForm.nombre}
+                    onChange={(e) => handlePlanField('nombre', e.target.value)}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Precio</label>
+                  <input
+                    type="number"
+                    value={planForm.precio}
+                    onChange={(e) => handlePlanField('precio', Number(e.target.value))}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-medium text-slate-600 mb-1">Descripción</label>
+                <textarea
+                  value={planForm.descripcion}
+                  onChange={(e) => handlePlanField('descripcion', e.target.value)}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
+                  rows={2}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-xs font-medium text-slate-600">Beneficios</label>
+                  <button type="button" onClick={addBeneficio} className="text-xs font-semibold text-emerald-600">+ Añadir</button>
+                </div>
+                <div className="space-y-2">
+                  {planForm.beneficios.map((b, idx) => (
+                    <div key={`${idx}-${b}`} className="flex items-center gap-2">
+                      <input
+                        value={b}
+                        onChange={(e) => handleBeneficioChange(idx, e.target.value)}
+                        className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
+                      />
+                      {planForm.beneficios.length > 1 && (
+                        <button type="button" onClick={() => removeBeneficio(idx)} className="text-xs text-red-500 font-semibold">Eliminar</button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-slate-600 mb-1">Estado</label>
+                  <select
+                    value={planForm.estado}
+                    onChange={(e) => handlePlanField('estado', e.target.value as 'activo' | 'inactivo')}
+                    className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/40"
+                  >
+                    <option value="activo">Activo</option>
+                    <option value="inactivo">Inactivo</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-2 text-sm font-medium text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={planForm.popular}
+                    onChange={(e) => handlePlanField('popular', e.target.checked)}
+                  />
+                  Marcar como popular
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingPlan(null)}
+                  className="flex-1 rounded-lg border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="button"
+                  disabled={planSaving}
+                  onClick={savePlanChanges}
+                  className="flex-1 rounded-lg bg-gradient-to-r from-emerald-500 to-sky-500 px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-60"
+                >
+                  {planSaving ? 'Guardando...' : 'Guardar cambios'}
+                </button>
+              </div>
+            </div>
+          </Modal>
+        )}
+
+        {planToDelete && (
+          <ConfirmModal
+            title="Eliminar plan"
+            description={`¿Seguro que deseas eliminar el plan "${planToDelete.nombre}"? Esta acción no se puede deshacer.`}
+            confirmText={planDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+            cancelText="Cancelar"
+            onConfirm={deletePlanConfirmed}
+            onCancel={() => setPlanToDelete(null)}
+          />
+        )}
+      </>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-6 page-fade-in">
-      {/* HEADER PRINCIPAL */}
       <header className="space-y-1">
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-500">
           Mi gimnasio
@@ -327,9 +688,6 @@ const MembershipsPage = () => {
         </p>
       </header>
 
-      
-
-      {/* PLAN ACTUAL */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
           Plan actual
@@ -339,7 +697,6 @@ const MembershipsPage = () => {
         </p>
 
         <div className="mt-4 flex flex-col gap-4 rounded-2xl border border-slate-200 bg-white px-4 py-4 md:flex-row md:items-center md:justify-between md:px-6 dark:border-slate-800 dark:bg-slate-950/80">
-          {/* Lado izquierdo */}
           <div className="space-y-3">
             <div>
               <p className="text-xs font-semibold uppercase text-slate-600 dark:text-slate-500">
@@ -355,7 +712,6 @@ const MembershipsPage = () => {
               </div>
             </div>
 
-            {/* Barra de progreso */}
             <div>
               <div className="flex items-center justify-between text-[11px] text-slate-400">
                 <span>Días restantes</span>
@@ -371,7 +727,6 @@ const MembershipsPage = () => {
               </div>
             </div>
 
-            {/* Próximo pago */}
             <div className="grid gap-2 text-xs text-slate-300 sm:grid-cols-1">
               <div>
                 <p className="text-[11px] text-slate-500">Próximo pago</p>
@@ -380,7 +735,6 @@ const MembershipsPage = () => {
             </div>
           </div>
 
-          {/* Lado derecho */}
           <div className="flex flex-col items-end gap-3">
             <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${currentPlan.status === 'Activo' ? 'bg-emerald-500/10 text-emerald-300' : 'bg-red-500/10 text-red-400'}`}>
               <span className={`mr-1.5 h-1.5 w-1.5 rounded-full ${currentPlan.status === 'Activo' ? 'bg-emerald-400' : 'bg-red-400'}`} />
@@ -392,8 +746,6 @@ const MembershipsPage = () => {
           </div>
         </div>
       </section>
-
-      
 
       {showCancelConfirm && (
         <ConfirmModal
@@ -417,7 +769,6 @@ const MembershipsPage = () => {
         />
       )}
 
-      {/* PLANES DISPONIBLES */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
         <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
@@ -432,25 +783,24 @@ const MembershipsPage = () => {
 
         <div className="grid gap-4 md:grid-cols-3">
           {availablePlans.map((plan) => {
-            const isCurrent = plan.tag === "Actual";
+            const isCurrent = plan.tag === 'Actual';
 
             return (
               <div
                 key={plan.id}
                 className={`relative flex h-full flex-col rounded-2xl border bg-white p-4 shadow-md shadow-slate-200/50 dark:bg-slate-950 dark:shadow-black/30 ${
                   isCurrent
-                    ? "border-sky-500/70 ring-1 ring-sky-500/40 dark:border-sky-500/70 dark:ring-1 dark:ring-sky-500/40"
-                    : "border-slate-200 dark:border-slate-800"
+                    ? 'border-sky-500/70 ring-1 ring-sky-500/40 dark:border-sky-500/70 dark:ring-1 dark:ring-sky-500/40'
+                    : 'border-slate-200 dark:border-slate-800'
                 }`}
               >
-                {/* Chips */}
                 <div className="mb-2 flex gap-2 text-[11px]">
-                  {plan.tag === "Popular" && (
+                  {plan.tag === 'Popular' && (
                     <span className="rounded-full bg-teal-500/10 px-2 py-0.5 font-semibold text-teal-300">
                       Popular
                     </span>
                   )}
-                  {plan.tag === "Actual" && (
+                  {plan.tag === 'Actual' && (
                     <span className="rounded-full bg-slate-600/10 px-2 py-0.5 font-semibold text-slate-200">
                       Plan actual
                     </span>
@@ -485,23 +835,21 @@ const MembershipsPage = () => {
                     if (isCurrent) return;
                     const raw = plan as any;
                     if (!raw.durationDays && raw.id && typeof raw.id === 'number') raw.durationDays = raw.id === 3 ? 180 : 30;
-                    // If user currently has an active membership, require cancellation first
                     if (currentPlan.status === 'Activo') {
                       setSelectedPlanToPurchase(raw);
                       setShowRequireCancelConfirm(true);
                       return;
                     }
-                    // open payment modal - pass raw plan object so backend id (_id) is preserved when available
                     setSelectedPlanToPurchase(raw);
                     setShowPaymentModal(true);
                   }}
                   className={`mt-3 w-full ${
                     isCurrent
-                      ? "rounded-2xl px-4 py-2 text-xs font-semibold bg-slate-700 text-slate-200"
-                      : "rounded-2xl px-4 py-2 text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-400 text-white shadow-md hover:from-blue-600 hover:to-emerald-500"
+                      ? 'rounded-2xl px-4 py-2 text-xs font-semibold bg-slate-700 text-slate-200'
+                      : 'rounded-2xl px-4 py-2 text-xs font-semibold bg-gradient-to-r from-blue-500 to-emerald-400 text-white shadow-md hover:from-blue-600 hover:to-emerald-500'
                   }`}
                 >
-                  {isCurrent ? "Plan actual" : plan.name}
+                  {isCurrent ? 'Plan actual' : plan.name}
                 </button>
               </div>
             );
@@ -513,7 +861,17 @@ const MembershipsPage = () => {
         <PaymentModal plan={selectedPlanToPurchase} onClose={() => { setShowPaymentModal(false); setSelectedPlanToPurchase(null); }} onConfirm={handlePaymentConfirm} />
       )}
 
-      {/* HISTORIAL DE PAGOS */}
+      {planToDelete && (
+        <ConfirmModal
+          title="Eliminar plan"
+          description={`¿Estás seguro de eliminar "${planToDelete?.nombre || ''}"?`}
+          confirmText={planDeleting ? 'Eliminando...' : 'Sí, eliminar'}
+          cancelText="Cancelar"
+          onConfirm={deletePlanConfirmed}
+          onCancel={() => setPlanToDelete(null)}
+        />
+      )}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
         <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
           Historial de pagos

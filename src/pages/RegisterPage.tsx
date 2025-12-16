@@ -1,7 +1,8 @@
 import type { FormEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerRequest, type Role } from "@/api/authService";
+import { parseAdminEmail } from "@/utils/adminEmail";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -20,6 +21,12 @@ const RegisterPage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  // Auto-detect admin role based on (.gym) marker in email
+  useEffect(() => {
+    const { isAdmin } = parseAdminEmail(email);
+    if (isAdmin && role !== "ADMIN") setRole("ADMIN");
+  }, [email]);
+
   const validateForm = () => {
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
       return "Todos los campos son obligatorios.";
@@ -32,7 +39,11 @@ const RegisterPage = () => {
 
     if (role === "ADMIN" && !email.toLowerCase().endsWith("@gym.com")) {
       return "Los administradores deben registrarse con un correo @gym.com";
-    }
+  const [role, setRole] = useState<Role>("USER");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     if (password.length < 8) {
       return "La contraseña debe tener al menos 8 caracteres.";
@@ -44,8 +55,12 @@ const RegisterPage = () => {
 
     return null;
   };
-
-  const handleSubmit = async (e: FormEvent) => {
+    // Validación para administradores: deben incluir el marcador (.gym) antes del @
+    if (role === "ADMIN") {
+      const { isAdmin } = parseAdminEmail(email);
+      if (!isAdmin) {
+        return "Para registrar un administrador escribe el correo como usuario(.gym)@gmail.com";
+      }
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -72,13 +87,14 @@ const RegisterPage = () => {
     } catch (err) {
       console.error(err);
       const axiosErr = err as { response?: { data?: unknown } };
-      type ApiError = { error?: { code?: string } };
-      const apiError = axiosErr?.response?.data as ApiError | undefined;
-      if (apiError?.error?.code === "email_exists") {
-        setError("Este correo ya existe. Intenta con uno diferente.");
-      } else if (!axiosErr?.response) {
-        setError("No se pudo conectar al servidor. Intenta más tarde.");
-      } else {
+      const { cleanEmail } = parseAdminEmail(email);
+      await registerRequest({
+        firstName,
+        lastName,
+        email: cleanEmail,
+        password,
+        role,
+      });
         setError(
           "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
         );
@@ -223,13 +239,14 @@ const RegisterPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-            </div>
+                type="text"
 
             <div>
               <label
                 htmlFor="role"
                 className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
               >
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Admin: escribe tu correo como usuario(.gym)@gmail.com. Ej: lauravalentinaarbelaez(.gym)@gmail.com</p>
                 Rol
               </label>
               <select

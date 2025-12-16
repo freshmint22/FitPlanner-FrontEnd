@@ -2,17 +2,17 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { loginRequest } from '@/api/authService';
+import { parseAdminEmail, roleFromInputEmail } from '@/utils/adminEmail';
 import { AuthContext } from './authContextCore';
 import type { AuthState } from './types';
 
 // ⚠️ Pon esto en false cuando conectes el backend real
 const DESIGN_MODE = false;
 
-// Enforce role by email domain: @gym.com => ADMIN, otherwise USER
+// Role derivation now based on the input marker (.gym). Fallback USER.
 function deriveRoleFromEmail(email?: string): 'ADMIN' | 'USER' {
-  const e = (email || '').toLowerCase().trim();
-  if (e.endsWith('@gym.com')) return 'ADMIN';
-  return 'USER';
+  if (!email) return 'USER';
+  return roleFromInputEmail(email);
 }
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
@@ -23,7 +23,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: {
           id: 'demo-1',
           name: 'Administrador',
-          email: 'admin@fitplanner.com',
+          email: 'admin(.gym)@gmail.com',
           role: 'ADMIN', // ✔️ ADMIN por defecto
         },
         token: 'demo-token',
@@ -44,7 +44,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: parsed.id,
                 name: parsed.name || parsed.email || 'Usuario',
                 email: parsed.email || '',
-                role: deriveRoleFromEmail(parsed.email),
+                role: (parsed.role as any) || deriveRoleFromEmail(parsed.email),
                 phone: parsed.phone || undefined,
                 birthDate: parsed.birthDate || undefined,
                 gender: parsed.gender || undefined,
@@ -86,15 +86,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Región real cuando conectes backend
-    const data = await loginRequest(email, password);
+    // Región real — sanitiza email y detecta rol por marcador
+    const { cleanEmail, isAdmin } = parseAdminEmail(email);
+    const data = await loginRequest(cleanEmail, password);
     // Guardar sólo si vienen valores válidos
     if (data.accessToken) {
       localStorage.setItem('accessToken', data.accessToken);
     }
     if (data.user) {
       // Persist full user object returned by backend (may include phone, birthDate, gender)
-      localStorage.setItem('user', JSON.stringify(data.user));
+      const storedUser = { ...data.user, email: data.user.email || cleanEmail, role: isAdmin ? 'ADMIN' : 'USER' };
+      localStorage.setItem('user', JSON.stringify(storedUser));
     }
 
     // Normalize user object and include membership if present
@@ -102,8 +104,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ? {
           id: String(data.user.id || data.user._id || ''),
           name: data.user.name || data.user.email || 'Usuario',
-          email: data.user.email || '',
-          role: deriveRoleFromEmail(data.user.email),
+          email: data.user.email || cleanEmail,
+          role: isAdmin ? 'ADMIN' : 'USER',
           membership: (data.user as any).membership || null,
         }
       : null;
@@ -114,8 +116,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         ? {
             id: data.user.id,
             name: data.user.name || data.user.email || 'Usuario',
-            email: data.user.email || '',
-            role: deriveRoleFromEmail(data.user.email),
+            email: data.user.email || cleanEmail,
+            role: isAdmin ? 'ADMIN' : 'USER',
             phone: (data.user as any).phone || undefined,
             birthDate: (data.user as any).birthDate || undefined,
             gender: (data.user as any).gender || undefined,
