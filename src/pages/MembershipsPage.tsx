@@ -2,6 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/context/useAuth';
 import axiosClient from '@/api/axiosClient';
+import PaymentModal from '@/components/PaymentModal';
 
 type Membership = {
   name?: string;
@@ -52,6 +53,8 @@ const MembershipsPage = () => {
 
   const [availablePlans, setAvailablePlans] = useState<Plan[]>([]);
   const [paymentsHistory, setPaymentsHistory] = useState<Payment[]>([]);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedPlanToPurchase, setSelectedPlanToPurchase] = useState<{ id: number; name: string; price: string; durationDays?: number } | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -119,7 +122,7 @@ const MembershipsPage = () => {
             {
               id: 3,
               name: "Plan Semestral",
-              price: "$270.000",
+              price: "$150.000",
               description: "Paga 6 meses y ahorra (180 días de acceso).",
               perks: [
                 "Todo lo incluido en Premium",
@@ -128,20 +131,6 @@ const MembershipsPage = () => {
                 "Evaluaciones trimestrales",
               ],
               tag: user?.membership?.name === "Plan Semestral" ? "Actual" : undefined,
-            },
-            {
-              id: 4,
-              name: "Plan Anual",
-              price: "$500.000",
-              description: "Mejor valor - 365 días de acceso completo.",
-              perks: [
-                "Todo lo incluido en Premium",
-                "Máximo ahorro anual",
-                "Acceso por 1 año completo",
-                "Plan nutricional personalizado",
-                "Entrenador personal (1 sesión/mes)",
-              ],
-              tag: user?.membership?.name === "Plan Anual" ? "Actual" : undefined,
             },
           ]);
         }
@@ -170,6 +159,31 @@ const MembershipsPage = () => {
 
   const progressPercent =
     currentPlan.totalDays > 0 ? (currentPlan.daysLeft / currentPlan.totalDays) * 100 : 0;
+
+  const handlePaymentConfirm = (plan: { id: number; name: string; price: string; durationDays?: number }) => {
+    const duration = plan.durationDays || (plan.id === 3 ? 180 : 30);
+    const today = new Date();
+    const end = new Date(today.getTime() + duration * 24 * 60 * 60 * 1000);
+
+    setCurrentPlan({
+      name: plan.name,
+      price: plan.price,
+      daysLeft: duration,
+      totalDays: duration,
+      nextPayment: end.toLocaleDateString(),
+      paymentMethod: '•••• 4242',
+      status: 'Activo',
+    });
+
+    // update tags in availablePlans
+    setAvailablePlans(prev => prev.map(p => ({ ...p, tag: p.id === plan.id ? 'Actual' : undefined })));
+
+    // optionally append a fake payment record
+    setPaymentsHistory(prev => [{ id: prev.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(prev.length + 1).padStart(3,'0')}`, amount: plan.price, status: 'Pagado' }, ...prev]);
+
+    setShowPaymentModal(false);
+    setSelectedPlanToPurchase(null);
+  };
 
   return (
     <div className="flex flex-col gap-6 page-fade-in">
@@ -330,6 +344,12 @@ const MembershipsPage = () => {
                 <div className="mt-4 flex-1" />
 
                 <button
+                  onClick={() => {
+                    if (isCurrent) return;
+                    // open payment modal
+                    setSelectedPlanToPurchase({ id: plan.id, name: plan.name, price: plan.price, durationDays: plan.id === 3 ? 180 : 30 });
+                    setShowPaymentModal(true);
+                  }}
                   className={`mt-3 w-full rounded-lg px-3 py-1.5 text-xs font-semibold ${
                     isCurrent
                       ? "bg-slate-700 text-slate-200"
@@ -343,6 +363,10 @@ const MembershipsPage = () => {
           })}
         </div>
       </section>
+
+      {showPaymentModal && (
+        <PaymentModal plan={selectedPlanToPurchase} onClose={() => { setShowPaymentModal(false); setSelectedPlanToPurchase(null); }} onConfirm={handlePaymentConfirm} />
+      )}
 
       {/* HISTORIAL DE PAGOS */}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-lg shadow-slate-200/40 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
