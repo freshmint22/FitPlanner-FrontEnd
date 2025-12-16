@@ -38,14 +38,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userStr = localStorage.getItem('user');
         if (token && userStr) {
           const parsed = JSON.parse(userStr);
+          const parsedId = parsed?.id || parsed?._id || (parsed?._doc && parsed._doc._id) || null;
+          const parsedEmail = parsed?.email || (parsed?.user && parsed.user.email) || '';
           return {
             token,
             user: parsed
               ? {
-                  id: parsed.id,
-                  name: parsed.name || parsed.email || 'Usuario',
-                  email: parsed.email || '',
-                  role: deriveRoleFromEmail(parsed.email),
+                  id: String(parsedId ?? ''),
+                  name: parsed.name || parsed.email || (parsed.user && parsed.user.name) || 'Usuario',
+                  email: parsedEmail,
+                  role: deriveRoleFromEmail(parsedEmail),
+                  membership: parsed.membership || parsed.user?.membership || null,
                 }
               : null,
             isAuthenticated: true,
@@ -90,16 +93,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(data.user));
     }
 
+    // Normalize user object and include membership if present
+    const normalized = data.user
+      ? {
+          id: String(data.user.id || data.user._id || ''),
+          name: data.user.name || data.user.email || 'Usuario',
+          email: data.user.email || '',
+          role: deriveRoleFromEmail(data.user.email),
+          membership: (data.user as any).membership || null,
+        }
+      : null;
+
     setState({
       token: data.accessToken ?? null,
-      user: data.user
-        ? {
-            id: data.user.id,
-            name: data.user.name || data.user.email || 'Usuario',
-            email: data.user.email || '',
-            role: deriveRoleFromEmail(data.user.email),
-          }
-        : null,
+      user: normalized,
       isAuthenticated: Boolean(data.accessToken || data.user),
     });
   };
