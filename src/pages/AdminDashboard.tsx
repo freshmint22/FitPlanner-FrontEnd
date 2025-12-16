@@ -23,6 +23,7 @@ export default function AdminDashboard() {
     clasesHoy: 0,
     ingresosMes: '$0'
   });
+  const [nextClass, setNextClass] = useState<any | null>(null);
 
   // Cargar KPIs reales del backend
   useEffect(() => {
@@ -43,6 +44,44 @@ export default function AdminDashboard() {
     };
 
     fetchKPIs();
+    // fetch next class (upcoming -> fallback to all classes)
+    const fetchNext = async () => {
+      try {
+        const { data } = await axiosClient.get('/classes/upcoming');
+        let candidate = (data && Array.isArray(data) ? data[0] : (data && data.items && Array.isArray(data.items) ? data.items[0] : null));
+        if (!candidate) {
+          const all = await axiosClient.get('/classes');
+          let items = all.data;
+          if (items && items.items) items = items.items;
+          if (!Array.isArray(items)) items = [];
+          const now = new Date();
+          const future = (items as any[])
+              .map((c) => {
+                let date = c.scheduleISO ? new Date(c.scheduleISO) : null;
+                if (!date && c.hour) {
+                  try {
+                    // lazy import util to avoid cyclic issues
+                    // (import at top would be fine too)
+                    // parse hour strings like '6:00 p.m.'
+                    const { parseHourStringToDate } = require('@/utils/dateUtil');
+                    const parsed = parseHourStringToDate(String(c.hour));
+                    if (parsed) date = parsed;
+                  } catch (e) {
+                    // ignore parse errors
+                  }
+                }
+                return { ...c, date };
+              })
+            .filter((c) => c.date && c.date.getTime() >= now.getTime())
+            .sort((a, b) => a.date.getTime() - b.date.getTime());
+          candidate = future[0] || null;
+        }
+        setNextClass(candidate || null);
+      } catch (e) {
+        // ignore
+      }
+    };
+    fetchNext();
   }, []);
 
   return (
@@ -55,8 +94,8 @@ export default function AdminDashboard() {
           actions={
             <>
               <button
-                className="btn-raise rounded-2xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:bg-slate-900"
-                onClick={() => setIsCalendarOpen(true)}
+                className="btn-raise rounded-2xl border border-slate-300 bg-slate-50 px-4 py-2 text-xs font-semibold text-slate-800 shadow hover:bg-slate-100 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:bg-slate-900"
+                onClick={() => window.location.href = '/classes/calendar'}
               >
                 Ver calendario completo
               </button>
@@ -90,14 +129,17 @@ export default function AdminDashboard() {
             icon="📅"
             isLoading={isLoadingKpis}
           />
-          <KpiCard
-            label="Ingresos del mes"
-            value={kpis.ingresosMes}
-            helperText="Basado en membresías activas."
-            trend="+12% vs mes anterior"
-            icon="💰"
-            isLoading={isLoadingKpis}
-          />
+          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+            <p className="text-[11px] uppercase tracking-wide text-slate-400">
+              Próxima clase
+            </p>
+            <p className="mt-2 text-base font-semibold text-slate-900">
+              {nextClass ? (nextClass.name || 'Sin nombre') : 'Sin clases'}
+            </p>
+            <p className="mt-1 text-xs text-slate-600">
+              {nextClass ? `${nextClass.hour || (nextClass.scheduleISO ? new Date(nextClass.scheduleISO).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '')} · ${nextClass.room || 'Sala no especificada'}` : 'No hay clases próximas'}
+            </p>
+          </div>
         </section>
 
         {/* Zona principal */}
@@ -142,7 +184,7 @@ export default function AdminDashboard() {
                 ].map((cls) => (
                   <div
                     key={cls.name}
-                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100"
+                    className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100"
                   >
                     <div className="space-y-1">
                       <p className="font-semibold">{cls.name}</p>
@@ -171,8 +213,8 @@ export default function AdminDashboard() {
               title="Ingresos por tipo de membresía"
               description="Desglose de ventas por plan en el mes actual."
             >
-              <div className="grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="grid gap-3 md:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Mensual Premium
                   </p>
@@ -183,7 +225,7 @@ export default function AdminDashboard() {
                     +6% vs mes anterior
                   </p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Mensual
                   </p>
@@ -194,7 +236,7 @@ export default function AdminDashboard() {
                     Estable respecto al mes pasado
                   </p>
                 </div>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <p className="text-xs font-medium text-slate-600 dark:text-slate-400">
                     Trimestral
                   </p>
@@ -216,7 +258,7 @@ export default function AdminDashboard() {
               description="Membresías que vencen en los próximos días."
             >
               <div className="space-y-3 text-sm text-slate-900 dark:text-slate-100">
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 dark:border-slate-800 dark:bg-slate-900/80">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-slate-900 dark:text-slate-100">Ana Torres</p>
@@ -280,23 +322,31 @@ export default function AdminDashboard() {
         title="Calendario del día"
         description="Visualiza la programación de clases en un calendario completo."
       >
-        <p className="text-xs text-slate-300">
-          Aquí podrías integrar una vista mensual, semanal o de agenda del
-          calendario del gimnasio. Por ahora es un ejemplo de contenido del
-          modal para probar la animación.
-        </p>
-
-        <div className="mt-4 flex justify-end gap-2">
-          <button
-            className="btn-raise rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700/80 dark:bg-slate-900/80 dark:text-slate-100"
-            onClick={() => setIsCalendarOpen(false)}
-          >
-            Cerrar
-          </button>
-          <button className="btn-raise rounded-2xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-400">
-            Ir al módulo de calendario
-          </button>
-        </div>
+        {nextClass ? (
+          <div className="space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-sky-100 flex items-center justify-center">
+                <svg className="w-6 h-6 text-sky-600" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M8 7V3M16 7V3M3 11h18M5 21h14a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2z"/></svg>
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{nextClass.name}</p>
+                <p className="text-xs text-slate-600">{nextClass.hour || (nextClass.scheduleISO ? new Date(nextClass.scheduleISO).toLocaleString() : '')} · {nextClass.room || 'Sala no especificada'}</p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500">Puedes abrir el calendario para ver todas las sesiones o navegar a la clase específica.</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button onClick={() => setIsCalendarOpen(false)} className="rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50">Cerrar</button>
+              <button onClick={() => { window.location.href = `/classes`; }} className="rounded-2xl bg-sky-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-400">Ver calendario</button>
+            </div>
+          </div>
+        ) : (
+          <div>
+            <p className="text-xs text-slate-300">No hay clases próximas para mostrar.</p>
+            <div className="mt-4 flex justify-end">
+              <button onClick={() => setIsCalendarOpen(false)} className="rounded-2xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50">Cerrar</button>
+            </div>
+          </div>
+        )}
       </Modal>
     </>
   );
