@@ -28,6 +28,12 @@ export const loginRequest = async (email: string, password: string) => {
   let user = data.user;
   if (!user && accessToken) {
     try {
+      // Ensure axios interceptor can send Authorization by storing token first
+      try {
+        if (typeof window !== 'undefined' && accessToken) {
+          localStorage.setItem('accessToken', accessToken);
+        }
+      } catch {}
       const profile = await axiosClient.get('/users/profile');
       user = {
         id: profile.data?.id || profile.data?.email || 'unknown',

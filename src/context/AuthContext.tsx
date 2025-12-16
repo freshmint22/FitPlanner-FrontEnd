@@ -38,19 +38,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const userStr = localStorage.getItem('user');
         if (token && userStr) {
           const parsed = JSON.parse(userStr);
-          const parsedId = parsed?.id || parsed?._id || (parsed?._doc && parsed._doc._id) || null;
-          const parsedEmail = parsed?.email || (parsed?.user && parsed.user.email) || '';
+          // Preserve additional user fields (phone, birthDate, gender, etc.)
+          const preserved = parsed
+            ? {
+                id: parsed.id,
+                name: parsed.name || parsed.email || 'Usuario',
+                email: parsed.email || '',
+                role: deriveRoleFromEmail(parsed.email),
+                phone: parsed.phone || undefined,
+                birthDate: parsed.birthDate || undefined,
+                gender: parsed.gender || undefined,
+              }
+            : null;
+
           return {
             token,
-            user: parsed
-              ? {
-                  id: String(parsedId ?? ''),
-                  name: parsed.name || parsed.email || (parsed.user && parsed.user.name) || 'Usuario',
-                  email: parsedEmail,
-                  role: deriveRoleFromEmail(parsedEmail),
-                  membership: parsed.membership || parsed.user?.membership || null,
-                }
-              : null,
+            user: preserved,
             isAuthenticated: true,
           };
         }
@@ -90,6 +93,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('accessToken', data.accessToken);
     }
     if (data.user) {
+      // Persist full user object returned by backend (may include phone, birthDate, gender)
       localStorage.setItem('user', JSON.stringify(data.user));
     }
 
@@ -106,7 +110,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     setState({
       token: data.accessToken ?? null,
-      user: normalized,
+      user: data.user
+        ? {
+            id: data.user.id,
+            name: data.user.name || data.user.email || 'Usuario',
+            email: data.user.email || '',
+            role: deriveRoleFromEmail(data.user.email),
+            phone: (data.user as any).phone || undefined,
+            birthDate: (data.user as any).birthDate || undefined,
+            gender: (data.user as any).gender || undefined,
+          }
+        : null,
       isAuthenticated: Boolean(data.accessToken || data.user),
     });
   };
