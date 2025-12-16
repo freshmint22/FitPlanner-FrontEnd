@@ -1,6 +1,7 @@
 // src/pages/ReportsPage.tsx
 import { useEffect, useState } from 'react';
 import axiosClient from '@/api/axiosClient';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 interface Reports {
   ingresos: string;
@@ -8,23 +9,71 @@ interface Reports {
   retencion: string;
 }
 
+interface IncomeData {
+  mes: string;
+  ingresos: number;
+}
+
+interface MembersData {
+  mes: string;
+  nuevos: number;
+}
+
+interface RetentionData {
+  mes: string;
+  retencion: number;
+}
+
+const COLORS = ['#10b981', '#3b82f6', '#8b5cf6', '#f59e0b', '#ef4444'];
+
 const ReportsPage = () => {
   const [reports, setReports] = useState<Reports>({
     ingresos: '$0',
     nuevosMiembros: 0,
     retencion: '0%'
   });
+  const [incomeData, setIncomeData] = useState<IncomeData[]>([]);
+  const [membersData, setMembersData] = useState<MembersData[]>([]);
+  const [retentionData, setRetentionData] = useState<RetentionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchReports = async () => {
       try {
-        const res = await axiosClient.get('/reports/dashboard-kpis');
+        // Fetch KPIs
+        const kpisRes = await axiosClient.get('/reports/dashboard-kpis');
         setReports({
-          ingresos: res.data.ingresosMes || '$0',
-          nuevosMiembros: res.data.nuevosMiembros || 0,
-          retencion: res.data.retencion || '0%'
+          ingresos: kpisRes.data.ingresosMes || '$0',
+          nuevosMiembros: kpisRes.data.nuevosMiembros || 0,
+          retencion: kpisRes.data.retencion || '0%'
         });
+
+        // Fetch income chart data
+        const incomeRes = await axiosClient.get('/reports/ingresos-mensuales');
+        if (incomeRes.data && Array.isArray(incomeRes.data)) {
+          setIncomeData(incomeRes.data.map((item: any) => ({
+            mes: item.mes || item._id || 'N/A',
+            ingresos: item.total || item.ingresos || 0
+          })));
+        }
+
+        // Fetch new members chart data
+        const membersRes = await axiosClient.get('/reports/nuevos-miembros-mes');
+        if (membersRes.data && Array.isArray(membersRes.data)) {
+          setMembersData(membersRes.data.map((item: any) => ({
+            mes: item.mes || item._id || 'N/A',
+            nuevos: item.count || item.nuevos || 0
+          })));
+        }
+
+        // Fetch retention chart data
+        const retentionRes = await axiosClient.get('/reports/retencion');
+        if (retentionRes.data && Array.isArray(retentionRes.data)) {
+          setRetentionData(retentionRes.data.map((item: any) => ({
+            mes: item.mes || item._id || 'N/A',
+            retencion: item.porcentaje || item.retencion || 0
+          })));
+        }
       } catch (error) {
         console.error('Error fetching reports:', error);
       } finally {
@@ -33,6 +82,10 @@ const ReportsPage = () => {
     };
 
     fetchReports();
+    
+    // Auto-refresh every 30 seconds to get latest data from MongoDB
+    const interval = setInterval(fetchReports, 30000);
+    return () => clearInterval(interval);
   }, []);
 
   return (
@@ -74,61 +127,137 @@ const ReportsPage = () => {
           </div>
         </section>
 
+        {/* Gráfica de Ingresos Mensuales */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50 mb-4">
+            Ingresos Mensuales
+          </h3>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">Cargando datos...</p>
+            </div>
+          ) : incomeData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={incomeData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="ingresos" stroke="#10b981" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">No hay datos disponibles</p>
+            </div>
+          )}
+        </section>
+
+        {/* Gráfica de Nuevos Miembros */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50 mb-4">
+            Nuevos Miembros por Mes
+          </h3>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">Cargando datos...</p>
+            </div>
+          ) : membersData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <BarChart data={membersData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Bar dataKey="nuevos" fill="#3b82f6" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">No hay datos disponibles</p>
+            </div>
+          )}
+        </section>
+
+        {/* Gráfica de Retención */}
+        <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
+          <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-50 mb-4">
+            Retención de Miembros (%)
+          </h3>
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">Cargando datos...</p>
+            </div>
+          ) : retentionData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={retentionData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="mes" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="retencion" stroke="#8b5cf6" strokeWidth={2} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-64">
+              <p className="text-slate-500">No hay datos disponibles</p>
+            </div>
+          )}
+        </section>
+
+        {/* Sección de exportación */}
         <section className="rounded-2xl border border-slate-200 bg-white p-4 shadow-lg shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900/90 dark:shadow-black/30">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-sm font-semibold text-slate-900 dark:text-slate-50">
-                Reportes generales
+                Exportar Reportes
               </h2>
               <p className="text-xs text-slate-400">
-                Exporta información clave del gimnasio.
+                Descarga información completa del dashboard.
               </p>
             </div>
             <div className="flex gap-2">
-              <button className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900">
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await axiosClient.get('/reports/dashboard-export-csv', { responseType: 'blob' });
+                    const url = window.URL.createObjectURL(new Blob([res.data]));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `dashboard-${new Date().toISOString().split('T')[0]}.csv`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  } catch (error) {
+                    console.error('Error exporting CSV:', error);
+                  }
+                }}
+                className="rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900">
                 Exportar CSV
               </button>
-              <button className="rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
+              <button 
+                onClick={async () => {
+                  try {
+                    const res = await axiosClient.get('/reports/dashboard-export-pdf', { responseType: 'blob' });
+                    const url = window.URL.createObjectURL(new Blob([res.data], { type: 'application/pdf' }));
+                    const link = document.createElement('a');
+                    link.href = url;
+                    link.setAttribute('download', `dashboard-${new Date().toISOString().split('T')[0]}.pdf`);
+                    document.body.appendChild(link);
+                    link.click();
+                    link.remove();
+                  } catch (error) {
+                    console.error('Error exporting PDF:', error);
+                  }
+                }}
+                className="rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
                 Descargar PDF
               </button>
             </div>
           </div>
-
-          <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-300">
-            <li className="flex items-center justify-between rounded-xl bg-white border border-slate-200 px-3 py-2 dark:bg-slate-950 dark:border-slate-800">
-              <div>
-                <p className="text-sm text-slate-900 dark:text-slate-100">
-                  Ingresos por tipo de membresía
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                  Desglose de ventas por plan y período.
-                </p>
-              </div>
-              <span className="text-[11px] text-slate-400">Mensual</span>
-            </li>
-            <li className="flex items-center justify-between rounded-xl bg-white border border-slate-200 px-3 py-2 dark:bg-slate-950 dark:border-slate-800">
-              <div>
-                <p className="text-sm text-slate-900 dark:text-slate-100">
-                  Asistencia y ocupación de clases
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                  Datos de check-in y uso de salas.
-                </p>
-              </div>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400">Semanal</span>
-            </li>
-            <li className="flex items-center justify-between rounded-xl bg-white border border-slate-200 px-3 py-2 dark:bg-slate-950 dark:border-slate-800">
-              <div>
-                <p className="text-sm text-slate-900 dark:text-slate-100">
-                  Retención y bajas de miembros
-                </p>
-                <p className="text-[11px] text-slate-500 dark:text-slate-500">
-                  Renovaciones, cancelaciones y reactivaciones.
-                </p>
-              </div>
-              <span className="text-[11px] text-slate-600 dark:text-slate-400">Trimestral</span>
-            </li>
-          </ul>
         </section>
       </div>
     </div>
