@@ -63,8 +63,8 @@ function Sidebar({ onClose, isMobile = false, className = "", isCollapsed = fals
   };
 
   const baseClasses = isMobile
-    ? "flex h-full w-72 flex-col overflow-y-auto bg-white/95 text-slate-900 shadow-2xl backdrop-blur dark:bg-[#020617]/95 dark:text-slate-100"
-    : `hidden ${isCollapsed ? "w-20" : "w-72"} flex-col overflow-y-auto border-r border-slate-200 bg-white text-slate-900 lg:flex lg:h-screen lg:sticky lg:top-0 transition-all duration-300 dark:border-slate-800/70 dark:bg-[#020617] dark:text-slate-100`;
+    ? "flex h-full w-72 flex-col overflow-y-auto bg-gradient-to-b from-cyan-100 to-emerald-100 text-slate-900 shadow-2xl backdrop-blur dark:bg-[#020617]/95 dark:text-slate-100"
+    : `hidden ${isCollapsed ? "w-20" : "w-72"} flex-col overflow-y-auto border-r border-slate-200 bg-gradient-to-b from-cyan-100 to-emerald-100 text-slate-900 lg:flex lg:h-screen lg:sticky lg:top-0 transition-all duration-300 dark:border-slate-800/70 dark:bg-[#020617] dark:text-slate-100`;
 
   return (
     <aside className={`${baseClasses} ${className}`}>
@@ -99,10 +99,11 @@ function Sidebar({ onClose, isMobile = false, className = "", isCollapsed = fals
         </div>
 
         <nav className={`flex-1 space-y-8 ${!isCollapsed ? "px-4 py-6" : "px-2 py-4"}`}>
-          <div>
+          {!isAdmin && (
+            <div>
             {!isCollapsed && <p className="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-500">General</p>}
             <div className="space-y-1">
-              {userNav.map((item) => (
+                {userNav.map((item) => (
                 <NavLink
                   key={item.to}
                   to={item.to}
@@ -120,9 +121,10 @@ function Sidebar({ onClose, isMobile = false, className = "", isCollapsed = fals
                   <span className="text-lg">{item.icon}</span>
                   {!isCollapsed && <span>{item.label}</span>}
                 </NavLink>
-              ))}
+                ))}
             </div>
-          </div>
+            </div>
+          )}
 
           {isAdmin && (
             <div>

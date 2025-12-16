@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '../ui/Modal';
 import axiosClient from '@/api/axiosClient';
 import type { MemberDto } from '@/api/membersService';
+import ConfirmModal from '@/components/ConfirmModal';
 
 interface EditMemberModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showConfirm, setShowConfirm] = useState(false);
 
   useEffect(() => {
     if (member) {
@@ -55,12 +57,16 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
     }
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
+    setShowConfirm(true);
+  };
+
+  const confirmDelete = async () => {
     if (!member) return;
-    if (!confirm('¿Estás seguro de eliminar este miembro?')) return;
 
     setIsLoading(true);
     setError('');
+    setShowConfirm(false);
 
     try {
       await axiosClient.delete(`/members/${member.id}`);
@@ -166,14 +172,6 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
             Eliminar
           </button>
           <button
-            type="button"
-            onClick={onClose}
-            disabled={isLoading}
-            className="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-900"
-          >
-            Cancelar
-          </button>
-          <button
             type="submit"
             disabled={isLoading}
             className="flex-1 rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-4 py-2 text-sm font-semibold text-white shadow disabled:opacity-50"
@@ -182,6 +180,17 @@ export function EditMemberModal({ isOpen, onClose, member, onSuccess }: EditMemb
           </button>
         </div>
       </form>
+
+      {showConfirm && (
+        <ConfirmModal
+          title="Eliminar miembro"
+          description="¿Estás seguro de eliminar este miembro? Esta acción no se puede deshacer."
+          confirmText="Aceptar"
+          cancelText="Cancelar"
+          onConfirm={confirmDelete}
+          onCancel={() => setShowConfirm(false)}
+        />
+      )}
     </Modal>
   );
 }
