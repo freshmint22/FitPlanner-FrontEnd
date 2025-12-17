@@ -36,9 +36,9 @@ type MembersData = {
   total: number;
 };
 
-type ClassAttendance = {
-  nombre: string;
-  asistentes: number;
+type PaymentMethodDatum = {
+  metodo: string;
+  total: number;
 };
 
 const COLORS = ['#10b981', '#3b82f6', '#0ea5e9', '#8b5cf6', '#f59e0b', '#ef4444'];
@@ -60,7 +60,8 @@ const ReportsPage = () => {
   });
   const [incomeData, setIncomeData] = useState<IncomeData[]>([]);
   const [membersData, setMembersData] = useState<MembersData[]>([]);
-  const [classAttendance, setClassAttendance] = useState<ClassAttendance[]>([]);
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodDatum[]>([]);
+  const [paymentMethodsTotal, setPaymentMethodsTotal] = useState(0);
   const [retentionValue, setRetentionValue] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -71,12 +72,12 @@ const ReportsPage = () => {
     const fetchReports = async () => {
       setError(null);
       try {
-        const [kpisRes, incomeRes, membersRes, retentionRes, classesRes] = await Promise.all([
+        const [kpisRes, incomeRes, membersRes, retentionRes, paymentsRes] = await Promise.all([
           axiosClient.get('/reportes/dashboard-kpis'),
           axiosClient.get('/reportes/ingresos-mensuales'),
           axiosClient.get('/reportes/nuevos-miembros-mes'),
           axiosClient.get('/reportes/retencion'),
-          axiosClient.get('/reportes/clases'),
+          axiosClient.get('/pagos/admin').catch(() => ({ data: { data: [] } })),
         ]);
 
         if (!isMounted) return;
@@ -115,50 +116,22 @@ const ReportsPage = () => {
           retencion: Number(retencion) || prev.retencion,
         }));
 
-        const clases = Array.isArray(classesRes.data?.reporte) ? classesRes.data.reporte : [];
-        const mapped = clases.map((item: any) => ({
-          nombre: item.nombre || item.name || 'Clase',
-          asistentes: Number(item.asistentes || 0),
-        }));
-        setClassAttendance(mapped);
+        // Métodos de pago
+        const rawPayments = paymentsRes?.data?.data ?? paymentsRes?.data?.payments ?? paymentsRes?.data ?? [];
+        if (Array.isArray(rawPayments)) {
+          const counts = new Map<string, number>();
+          rawPayments.forEach((p: any) => {
+            const methodRaw = (p.method || p.metodo || '').toString().trim();
+            const method = methodRaw ? methodRaw.charAt(0).toUpperCase() + methodRaw.slice(1) : 'Otro';
+            counts.set(method, (counts.get(method) || 0) + 1);
+          });
+          const data = Array.from(counts.entries()).map(([metodo, total]) => ({ metodo, total }));
+          const total = data.reduce((sum, d) => sum + d.total, 0);
+          setPaymentMethods(data);
+          setPaymentMethodsTotal(total);
+        }
 
         // Fallback: if no attendance data returned, compute using reservations per class
-        if (mapped.length === 0) {
-          try {
-            const classesListRes = await axiosClient.get('/classes');
-            const classesList = Array.isArray(classesListRes.data?.items)
-              ? classesListRes.data.items
-              : Array.isArray(classesListRes.data?.data)
-              ? classesListRes.data.data
-              : [];
-            // fetch reservations count per class in parallel
-            const reservationCounts = await Promise.all(
-              classesList.map(async (c: any) => {
-                try {
-                  const id = c.id || c._id || c.id;
-                  const r = await axiosClient.get(`/classes/${id}/reservations`);
-                  const list = Array.isArray(r.data?.items)
-                    ? r.data.items
-                    : Array.isArray(r.data?.reservations)
-                    ? r.data.reservations
-                    : Array.isArray(r.data?.data)
-                    ? r.data.data
-                    : [];
-                  const booked = list.filter((x: any) => (x.status || 'booked') === 'booked').length;
-                  return { nombre: c.name || c.title || 'Clase', asistentes: booked };
-                } catch {
-                  return { nombre: c.name || c.title || 'Clase', asistentes: 0 };
-                }
-              })
-            );
-            const nonZero = reservationCounts.filter((x) => x.asistentes > 0);
-            if (nonZero.length > 0 && isMounted) {
-              setClassAttendance(nonZero);
-            }
-          } catch (e) {
-            // ignore fallback errors; keep empty state
-          }
-        }
       } catch (err) {
         console.error('Error fetching reports:', err);
         if (isMounted) {
@@ -189,16 +162,56 @@ const ReportsPage = () => {
   }, [incomeData]);
 
   const lastNewMembers = membersData[membersData.length - 1]?.total || 0;
-  const classesCount = classAttendance.length;
-  const processedClasses = useMemo(() => {
-    const sorted = [...classAttendance].sort((a, b) => b.asistentes - a.asistentes);
-    const top = sorted.slice(0, 5);
-    const rest = sorted.slice(5);
-    const restTotal = rest.reduce((sum, c) => sum + c.asistentes, 0);
-    const data = restTotal > 0 ? [...top, { nombre: 'Otros', asistentes: restTotal }] : top;
-    const total = data.reduce((sum, c) => sum + c.asistentes, 0) || 1;
+
+  const paymentMethodsChart = useMemo(() => {
+    const data = paymentMethods.length ? paymentMethods : [{ metodo: 'Sin datos', total: 1 }];
+    const total = paymentMethodsTotal || data.reduce((sum, d) => sum + d.total, 0) || 1;
     return { data, total };
-  }, [classAttendance]);
+  }, [paymentMethods, paymentMethodsTotal]);
+
+  const exportPaymentMethodsCsv = async () => {
+    try {
+      let data = paymentMethods;
+
+      // If there is no data yet, fetch fresh from the API
+      if (!data.length) {
+        const paymentsRes = await axiosClient.get('/pagos/admin').catch(() => ({ data: { data: [] } }));
+        const rawPayments = paymentsRes?.data?.data ?? paymentsRes?.data?.payments ?? paymentsRes?.data ?? [];
+        if (Array.isArray(rawPayments)) {
+          const counts = new Map<string, number>();
+          rawPayments.forEach((p: any) => {
+            const methodRaw = (p.method || p.metodo || '').toString().trim();
+            const method = methodRaw ? methodRaw.charAt(0).toUpperCase() + methodRaw.slice(1) : 'Otro';
+            counts.set(method, (counts.get(method) || 0) + 1);
+          });
+          data = Array.from(counts.entries()).map(([metodo, total]) => ({ metodo, total }));
+        }
+      }
+
+      if (!data.length) {
+        alert('No hay datos de métodos de pago para exportar.');
+        return;
+      }
+
+      const rows = [
+        ['Método de pago', 'Total pagos'],
+        ...data.map((d) => [d.metodo, d.total.toString()]),
+      ];
+
+      const csv = rows.map((r) => r.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(',')).join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `metodos-pago-${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+    } catch (err) {
+      console.error('Error exportando métodos de pago:', err);
+      alert('No se pudo exportar los métodos de pago. Intenta más tarde.');
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6 page-fade-in">
@@ -214,7 +227,7 @@ const ReportsPage = () => {
         </div>
       )}
 
-      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <section className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
         <KpiCard
           label="Ingresos totales"
           value={isLoading ? '...' : formatCurrency(kpis.ingresosMes)}
@@ -225,12 +238,6 @@ const ReportsPage = () => {
           label="Miembros activos"
           value={isLoading ? '...' : kpis.totalMiembros.toLocaleString('es-CO')}
           helperText={`+${lastNewMembers} nuevos este mes`}
-          isLoading={isLoading}
-        />
-        <KpiCard
-          label="Clases impartidas"
-          value={isLoading ? '...' : classesCount}
-          helperText="Actualizado con asistencia real"
           isLoading={isLoading}
         />
       </section>
@@ -292,32 +299,32 @@ const ReportsPage = () => {
           )}
         </PageSection>
 
-        <PageSection title="Asistencia por clase" description="Clases más reservadas">
+        <PageSection title="Métodos de pago" description="Distribución por método según pagos registrados">
           {isLoading ? (
             <div className="flex h-80 items-center justify-center text-sm text-slate-500">Cargando datos...</div>
-          ) : classAttendance.length > 0 ? (
+          ) : paymentMethods.length > 0 ? (
             <ResponsiveContainer width="100%" height={320}>
               <PieChart>
                 <Pie
-                  data={processedClasses.data}
-                  dataKey="asistentes"
-                  nameKey="nombre"
+                  data={paymentMethodsChart.data}
+                  dataKey="total"
+                  nameKey="metodo"
                   cx="50%"
                   cy="50%"
                   outerRadius={110}
-                  label={({ name, value }) => `${name} ${Math.round((value / processedClasses.total) * 100)}%`}
+                  label={({ name, value }) => `${name} ${Math.round((value / paymentMethodsChart.total) * 100)}%`}
                   labelLine={false}
                 >
-                  {processedClasses.data.map((_, index) => (
+                  {paymentMethodsChart.data.map((_, index) => (
                     <Cell key={index} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(v: number, name) => [`${v} reservas`, name]} />
+                <Tooltip formatter={(v: number, name) => [`${v} pagos`, name]} />
                 <Legend />
               </PieChart>
             </ResponsiveContainer>
           ) : (
-            <div className="flex h-80 items-center justify-center text-sm text-slate-500">No hay datos disponibles</div>
+            <div className="flex h-80 items-center justify-center text-sm text-slate-500">No hay pagos registrados</div>
           )}
         </PageSection>
       </div>
@@ -345,23 +352,10 @@ const ReportsPage = () => {
           </button>
 
           <button
-            onClick={async () => {
-              try {
-                const res = await axiosClient.get('/reportes/clases/excel', { responseType: 'blob' });
-                const url = window.URL.createObjectURL(new Blob([res.data]));
-                const link = document.createElement('a');
-                link.href = url;
-                link.setAttribute('download', `clases-${new Date().toISOString().split('T')[0]}.xlsx`);
-                document.body.appendChild(link);
-                link.click();
-                link.remove();
-              } catch (err) {
-                console.error('Error exportando Excel de clases:', err);
-              }
-            }}
+            onClick={exportPaymentMethodsCsv}
             className="rounded-xl border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:hover:bg-slate-900"
           >
-            Clases Excel
+            Métodos de pago Excel
           </button>
         </div>
       </PageSection>

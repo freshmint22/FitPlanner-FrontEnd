@@ -10,6 +10,7 @@ import axiosClient from '@/api/axiosClient';
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = (user as any)?.role?.toUpperCase?.() === 'ADMIN' || (user as any)?.rol === 'ADMIN';
   const [showPassword, setShowPassword] = useState(false);
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -488,46 +489,48 @@ export default function SettingsPage() {
         </div>
       </PageSection>
 
-      {/* Información de membresía */}
-      <PageSection
-        title="Información de membresía"
-        description="Detalles de tu plan actual en el gimnasio."
-      >
-        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100">
-          <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-              Plan actual
-            </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
-              Premium Mensual
-            </p>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-              Acceso completo a todas las áreas del gimnasio y clases grupales.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-4 text-xs">
-            <div>
-              <p className="text-slate-600 dark:text-slate-400">Estado</p>
-              <p className="mt-1 font-semibold text-emerald-400">Activo</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Fecha de inicio</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 01 / 2024</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Renovación</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 04 / 2024</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Próximo cobro</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
-                $120.000 COP
+      {/* Información de membresía (solo usuarios no admin) */}
+      {!isAdmin && (
+        <PageSection
+          title="Información de membresía"
+          description="Detalles de tu plan actual en el gimnasio."
+        >
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100">
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                Plan actual
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Premium Mensual
+              </p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                Acceso completo a todas las áreas del gimnasio y clases grupales.
               </p>
             </div>
+
+            <div className="grid gap-4 md:grid-cols-4 text-xs">
+              <div>
+                <p className="text-slate-600 dark:text-slate-400">Estado</p>
+                <p className="mt-1 font-semibold text-emerald-400">Activo</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Fecha de inicio</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 01 / 2024</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Renovación</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 04 / 2024</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Próximo cobro</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  $120.000 COP
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </PageSection>
+        </PageSection>
+      )}
 
       {/* Zona de peligro */}
       <PageSection
