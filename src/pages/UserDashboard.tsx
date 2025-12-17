@@ -24,8 +24,20 @@ export default function UserDashboard() {
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [reservations, setReservations] = useState<any[]>([]);
   const [nextClassRaw, setNextClassRaw] = useState<any | null>(null);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [recentPayments, setRecentPayments] = useState<any[]>([]);
+  const [notifConfig, setNotifConfig] = useState<any | null>(null);
+  const [currentPlan, setCurrentPlan] = useState<any>({ name: 'Sin membresía', price: '$0', daysLeft: 0, totalDays: 0, nextPayment: 'N/A', paymentMethod: 'N/A', status: 'Inactivo' });
+  const [todayRoutine, setTodayRoutine] = useState<any[]>([]);
+  const [myRoutines, setMyRoutines] = useState<any[]>([]);
 
   useEffect(() => {
+    if (!user) {
+      setIsLoading(false);
+      return;
+    }
+    setIsLoading(true);
+
     const fetchUserStats = async () => {
       try {
         const results = await Promise.allSettled([
@@ -70,6 +82,107 @@ export default function UserDashboard() {
         setReservations(myReservations || []);
         setNextClassRaw(nextClass || null);
         setStats({ attendanceThisMonth: monthDays, streak: streakCount, nextClass: nextClass || undefined });
+
+        // derive currentPlan from user.membership if available
+        try {
+          const m = (user as any)?.membership;
+          if (m) {
+            const daysLeft = m.endDate
+              ? Math.max(0, Math.ceil((new Date(m.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+              : m.duration || 0;
+            setCurrentPlan({
+              name: m.name || 'Plan',
+              price: (m.price ? (typeof m.price === 'number' ? `$${Number(m.price).toLocaleString()}` : m.price) : '$0'),
+              daysLeft,
+              totalDays: m.duration || 30,
+              nextPayment: m.endDate ? new Date(m.endDate).toLocaleDateString() : 'N/A',
+              paymentMethod: m.paymentMethod || '•••• ****',
+              status: 'Activo',
+            });
+          } else {
+            setCurrentPlan({ name: 'Sin membresía', price: '$0', daysLeft: 0, totalDays: 0, nextPayment: 'N/A', paymentMethod: 'N/A', status: 'Inactivo' });
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        // build today's routine from assigned routines (first assignment with today's date or weekly routine)
+        try {
+          let assignedList: any[] = assignments || [];
+          // If routines contain exercises, pick the most recent assigned routine
+          if (Array.isArray(assignedList) && assignedList.length) {
+            const first = assignedList[0];
+            const exercises = first.exercises || first.items || [];
+            setTodayRoutine(exercises.slice(0, 6));
+          } else {
+            setTodayRoutine([]);
+          }
+        } catch (e) {
+          setTodayRoutine([]);
+        }
+
+        // Load recent payments from localStorage (persisted receipts)
+        let paymentsArr: any[] = [];
+        try {
+          if (typeof window !== 'undefined') {
+            const stored = localStorage.getItem('fitplanner.pagos');
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              if (Array.isArray(parsed)) {
+                paymentsArr = parsed.slice(0, 5);
+                setRecentPayments(paymentsArr);
+              }
+            }
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        // Build simple notifications list from receipts and upcoming class
+        try {
+          const notifs: any[] = [];
+          if (nextClass) notifs.push({ type: 'class', title: `Próxima clase: ${nextClass.name || 'Clase'}`, body: nextClass.time || nextClass.hour || 'Horario disponible', when: nextClass.date ? new Date(nextClass.date).toISOString() : null });
+          if (Array.isArray(assignments) && assignments.length) notifs.push({ type: 'routine', title: `Rutina asignada`, body: `${assignments.length} ejercicios asignados`, when: new Date().toISOString() });
+          if (paymentsArr.length) paymentsArr.forEach((p: any) => notifs.push({ type: 'payment', title: `Pago recibido ${p.amount}`, body: `${p.planName || ''} • ${p.invoice || ''}`, when: p.date }));
+          setNotifications(notifs.slice(0, 6));
+        } catch (e) {
+          // ignore
+        }
+
+        // If admin, load notifications configuration from backend (admin-only)
+        try {
+          if ((user as any)?.role === 'ADMIN' || (user as any)?.rol === 'ADMIN') {
+            const cfg = await axiosClient.get('/notifications/configuracion/notificaciones').catch(() => null);
+            if (cfg && cfg.data) setNotifConfig(cfg.data.data || cfg.data);
+          }
+        } catch (e) {
+          // ignore
+        }
+
+        // Load user's routines (created routines) - try backend then localStorage
+        try {
+          const rres = await axiosClient.get('/routines').catch(() => null);
+          let items: any[] = [];
+          if (rres && rres.data) {
+            const d = rres.data;
+            if (Array.isArray(d)) items = d;
+            else if (d.items) items = d.items;
+            else if (d.data) items = d.data;
+          }
+          if (!items || items.length === 0) {
+            // try localStorage fallback
+            try {
+              const stored = localStorage.getItem('fitplanner.rutinas');
+              const arr = stored ? JSON.parse(stored) : [];
+              items = Array.isArray(arr) ? arr : [];
+            } catch { items = []; }
+          }
+
+          const simple = (items || []).map((r: any) => ({ _id: r._id || r.id, name: r.name || r.nombre || r.nombreRutina || 'Rutina', frequency: r.frequency || (r.diasPorSemana ? `${r.diasPorSemana} días/semana` : r.frequency || ''), focus: r.focus || r.enfoque || (r.dias ? (Array.isArray(r.dias) ? r.dias.map((d: any) => d.nombre || d).join(', ') : String(r.dias)) : '') }));
+          setMyRoutines(simple.slice(0, 6));
+        } catch (e) {
+          // ignore
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -78,17 +191,17 @@ export default function UserDashboard() {
     };
 
     fetchUserStats();
-  }, []);
+  }, [user]);
 
   const topNextClass = nextClassRaw || stats.nextClass || null;
 
   return (
     <div className="min-h-full bg-slate-50 pb-10 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto max-w-6xl px-4 pt-6 space-y-6 page-fade-in">
+      <div className="mx-auto max-w-6xl px-4 pt-3 space-y-4 page-fade-in">
         <PageHeader
-          pill="Panel de entrenamiento"
+          pill="Home"
           title={`Hola, ${user?.name?.split(' ')[0] || 'bienvenido'}`}
-          subtitle="Revisa tu progreso, tu racha de entrenos y las próximas clases reservadas."
+          subtitle="Resumen rápido: progreso, recibos, clases y recordatorios."
           actions={(
             <>
               <button onClick={() => (window.location.href = '/classes/calendar')} className="btn-raise rounded-2xl border border-slate-300 bg-white px-4 py-2 text-xs font-semibold text-slate-800 shadow hover:bg-slate-100 dark:border-slate-700/80 dark:bg-slate-950/70 dark:text-slate-100 dark:hover:bg-slate-900">
@@ -97,89 +210,143 @@ export default function UserDashboard() {
             </>
           )} />
 
-        <section className="grid gap-5 md:grid-cols-3 items-start">
-          <KpiCard
-            label="Sesiones este mes"
-            value={String(stats.attendanceThisMonth)}
-            helperText="Objetivo: 16 entrenos mensuales."
-            icon="🏋️‍♂️"
-            isLoading={isLoading}
-          />
+        <section className="grid gap-3 md:grid-cols-3 items-stretch">
+          <div className="md:col-span-2 grid gap-3 md:grid-cols-2 items-stretch">
+            <PageSection title="Eventos recientes" description="Notificaciones relevantes para ti" className="h-full">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-900 shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60 h-full flex flex-col">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Notificaciones</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-1">Eventos recientes</p>
+                  </div>
+                  <div className="text-xs text-slate-400">{notifications.length} nuevas</div>
+                </div>
 
-          <KpiCard
-            label="Racha activa"
-            value={`${stats.streak} días`}
-            helperText="Entrenaste los últimos días."
-            icon="🔥"
-            isLoading={isLoading}
-          />
+                <ul className="mt-3 space-y-2 max-h-44 overflow-auto flex-1">
+                  {notifications.length === 0 && <li className="text-xs text-slate-500">No hay notificaciones recientes</li>}
+                  {notifications.map((n, idx) => {
+                    const displayDate = n.type === 'payment' ? (n.when || '') : (n.when ? new Date(n.when).toLocaleDateString() : '');
+                    return (
+                      <li key={idx} className="flex items-start justify-between rounded-md border border-slate-100 p-2">
+                        <div className="flex-1">
+                          <div className="text-[13px] font-semibold text-slate-800">{n.title}</div>
+                          <div className="text-[12px] text-slate-500">{n.body}</div>
+                        </div>
+                        <div className="ml-3 text-[11px] text-slate-400">{displayDate}</div>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            </PageSection>
 
-          <div>
-            <PageSection title="Tu próxima clase" description="Llega 10 minutos antes para calentar y asegurar tu puesto." className="h-full">
+            <PageSection title="Recibos recientes" description="Tus últimos pagos registrados" className="h-full">
+              <div className="rounded-2xl border border-slate-200 bg-white p-3 text-sm text-slate-900 shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60 h-full flex flex-col">
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-xs font-semibold text-slate-600">Recibos</p>
+                    <p className="text-sm font-semibold text-slate-900 mt-1">Últimos pagos</p>
+                  </div>
+                  <div className="text-xs text-slate-400">{recentPayments.length} registros</div>
+                </div>
+
+                <div className="mt-3 space-y-2 overflow-auto flex-1">
+                  {recentPayments.length === 0 && <div className="text-xs text-slate-500">No hay recibos aún</div>}
+                  {recentPayments.map((p: any, i: number) => (
+                    <div key={i} className="flex items-center justify-between rounded-md border border-slate-100 p-2">
+                      <div>
+                        <div className="text-sm font-semibold">{p.planName || 'Membresía'}</div>
+                        <div className="text-xs text-slate-500">{p.invoice} • {p.date}</div>
+                      </div>
+                      <div className="text-sm font-semibold text-slate-900">{p.amount}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </PageSection>
+          </div>
+
+          <div className="h-full space-y-3">
+            <PageSection title="Tu próxima clase" description="Llega 10 minutos antes para calentar y asegurar tu puesto." className="flex flex-col">
               {topNextClass ? (
-                <div className="rounded-2xl border border-slate-200 bg-white/90 px-4 py-3 shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60">
+                <div className="rounded-2xl border border-slate-200 bg-white/90 px-3 py-2 shadow-sm dark:border-slate-800/60 dark:bg-slate-950/60">
                   <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{topNextClass.name || 'Sin nombre'}</p>
                   <p className="mt-1 text-xs text-slate-500">{topNextClass.time || topNextClass.hour || 'Horario no especificado'} · {topNextClass.room || 'Sala no especificada'}</p>
-                  {topNextClass.trainer && <p className="mt-2 text-[12px] text-slate-500">Entrenador: <span className="font-medium text-slate-700 dark:text-slate-200">{topNextClass.trainer}</span></p>}
-                  <div className="mt-4">
-                    <button onClick={() => { setSelectedDetails(topNextClass); setIsDetailsOpen(true); }} className="inline-flex w-full items-center justify-center rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-white shadow-md hover:bg-sky-400">Ver detalles de la clase</button>
+                  {topNextClass.trainer && <p className="mt-1 text-[12px] text-slate-500">Entrenador: <span className="font-medium text-slate-700 dark:text-slate-200">{topNextClass.trainer}</span></p>}
+                  <div className="mt-3">
+                    <button onClick={() => { setSelectedDetails(topNextClass); setIsDetailsOpen(true); }} className="inline-flex w-full items-center justify-center rounded-full bg-sky-500 px-3 py-2 text-xs font-semibold text-white shadow-md hover:bg-sky-400">Ver detalles de la clase</button>
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-600">No hay clases próximas</div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 text-sm text-slate-600">No hay clases próximas</div>
               )}
             </PageSection>
-          </div>
-        </section>
 
-        <div className="grid gap-6 lg:grid-cols-3 items-start -mt-6 lg:-mt-8">
-          <div className="space-y-5 lg:col-span-2">
-            <PageSection title="Membresía activa" description="Plan actual, vigencia y asistencia del mes." className="card-pop">
-              <div className="relative overflow-hidden rounded-2xl bg-white px-4 py-4 text-sm text-slate-900 shadow-sm dark:bg-slate-900/80 dark:text-slate-100">
-                <div className="absolute -right-10 -top-8 h-44 w-44 rounded-full bg-gradient-to-br from-sky-300 to-emerald-200 opacity-60 blur-3xl" />
-                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{user?.membership?.name || 'Sin membresía activa'}</p>
-                <p className="mt-1 text-lg font-semibold text-slate-900">Acceso total al gimnasio</p>
-                <p className="mt-1 text-xs text-slate-600">Vigente hasta el <span className="font-semibold text-slate-900">{user?.membership?.endDate ? new Date(user.membership.endDate).toLocaleDateString() : 'No definido'}</span></p>
-                <div className="mt-4">
-                  <p className="text-[11px] text-slate-600 mb-2">Asistencias este mes: <span className="font-semibold text-slate-900">{stats.attendanceThisMonth} / 16</span></p>
-                  <div className="h-2 w-full rounded-full bg-slate-100"><div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-sky-500" style={{ width: `${Math.min((stats.attendanceThisMonth / 16) * 100, 100)}%` }} /></div>
-                </div>
-              </div>
-            </PageSection>
-
-            <PageSection title="Rutina de hoy" description="Enfocada en fuerza y core. Mantén una técnica correcta y controla los descansos.">
-              <div className="grid gap-4 md:grid-cols-2">
-                <ul className="space-y-2 text-xs text-slate-700 dark:text-slate-200">
-                  <li className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Sentadillas con barra</p><p className="text-xs text-slate-500 dark:text-slate-400">Piernas · 4 × 10</p></li>
-                  <li className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200"><p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Press banca</p><p className="text-xs text-slate-500 dark:text-slate-400">Pecho · 4 × 8</p></li>
-                </ul>
-                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-xs text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-100">
-                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">Grupos musculares</p>
-                  <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Balance semanal entre parte superior, inferior y core.</p>
-                </div>
-              </div>
-            </PageSection>
-          </div>
-
-          <div className="space-y-5">
-            <PageSection title="Recordatorios rápidos" description="Pequeños detalles que mantienen tu progreso en marcha.">
+            <PageSection title="Recordatorios rápidos" description="Pequeños detalles que mantienen tu progreso en marcha." className="">
               <RotatingTips
                 intervalMs={3500}
+                compact
                 tips={[
                   '💧 Intenta tomar al menos 2 litros de agua durante el día.',
                   '😴 Procura dormir entre 7 y 8 horas para una mejor recuperación.',
                   '🏃‍♂️ Realiza 10 minutos de cardio ligero antes de tu entrenamiento.',
                   '🍎 Incorpora una porción de proteína en cada comida para recuperación.',
                   '🧘‍♀️ Añade 5 minutos de estiramiento al finalizar tu rutina.',
-                  '📆 Planifica una semana ligera cada 4 semanas para recuperación.',
-                  '⚖️ Mantén una postura neutra al hacer sentadillas para proteger la espalda.',
-                  '🔁 Varía el orden de los ejercicios cada 2 semanas para evitar estancamiento.',
-                  '🫗 Hidrátate durante la sesión: pequeños sorbos cada 15 minutos.',
-                  '📝 Lleva un registro de pesos y repeticiones para medir progreso.'
                 ]}
               />
             </PageSection>
           </div>
+        </section>
+
+        <div className="grid gap-6 lg:grid-cols-3 items-start">
+          <div className="space-y-5 lg:col-span-2">
+            <PageSection title="Membresía activa" description="Plan actual, vigencia y asistencia del mes." className="card-pop">
+              <div className="relative overflow-hidden rounded-2xl bg-white px-4 py-6 text-sm text-slate-900 shadow-sm dark:bg-slate-900/80 dark:text-slate-100">
+                {/* Plan card (compact) - adapts to active membership */}
+                <div className="grid md:grid-cols-2 gap-4 items-center">
+                  <div>
+                    <div className="text-xs font-semibold uppercase tracking-wide text-emerald-600">{(user?.membership?.name || '').toUpperCase() || 'SIN MEMBRESÍA'}</div>
+                    <h3 className="mt-1 text-lg font-semibold text-slate-900">{user?.membership?.name ? user.membership.name : 'Sin membresía activa'}</h3>
+                    <p className="mt-1 text-xs text-slate-600">Vigente hasta <span className="font-semibold text-slate-900">{user?.membership?.endDate ? new Date(user.membership.endDate).toLocaleDateString() : 'No definido'}</span></p>
+                    <div className="mt-4">
+                      <p className="text-[11px] text-slate-600 mb-2">Asistencias este mes: <span className="font-semibold text-slate-900">{stats.attendanceThisMonth} / 16</span></p>
+                      <div className="h-2 w-full rounded-full bg-slate-100"><div className="h-2 rounded-full bg-gradient-to-r from-emerald-400 to-sky-500" style={{ width: `${Math.min((stats.attendanceThisMonth / 16) * 100, 100)}%` }} /></div>
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col items-end justify-center">
+                    <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm w-48 text-center">
+                      <div className="text-sm font-semibold text-slate-700">{user?.membership?.name || 'Plan'}</div>
+                      <div className="mt-2 text-2xl font-extrabold text-slate-900">{user?.membership?.price || currentPlan.price}</div>
+                      <p className="mt-2 text-xs text-slate-500">{user?.membership?.description || ''}</p>
+                      <div className="mt-4">
+                        <button onClick={() => (window.location.href = '/my-membership')} className="rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 px-4 py-2 text-sm font-semibold text-white">Ver membresía</button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </PageSection>
+
+            <PageSection title="Rutina de hoy" description="Tus rutinas creadas — vista rápida.">
+              <div className="space-y-3">
+                {isLoading ? (
+                  <p className="text-sm text-slate-500">Cargando...</p>
+                ) : myRoutines.length === 0 ? (
+                  <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">No tienes rutinas creadas aún</div>
+                ) : (
+                  myRoutines.slice(0, 3).map((r: any) => (
+                    <div key={r._id || r.name} className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-800 dark:border-slate-800 dark:bg-slate-900/80 dark:text-slate-200">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{r.name}</p>
+                      <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">{r.frequency || ''} {r.focus ? `· ${r.focus}` : ''}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </PageSection>
+          </div>
+
+          
         </div>
 
         <ClassDetailsModal
