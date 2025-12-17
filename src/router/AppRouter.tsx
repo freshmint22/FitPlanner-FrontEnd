@@ -26,6 +26,7 @@ import AdminDashboardPage from '@/pages/AdminDashboard';
 import MembersPage from '@/pages/MembersPage';
 import MembershipsPage from '@/pages/MembershipsPage';
 import ReportsPage from '@/pages/ReportsPage';
+import AdminPreview from '@/pages/AdminPreview';
 
 export default function AppRouter() {
   return (
@@ -43,6 +44,8 @@ export default function AppRouter() {
         <Route path="/forgot" element={<ForgotPasswordPage />} />
         <Route path="/forgot/sent" element={<EmailSentPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
+        {/* Dev helper to preview admin UI locally without changing server users */}
+        {process.env.NODE_ENV === 'development' && <Route path="/admin/preview" element={<AdminPreview />} />}
       </Route>
 
       {/* =============== RUTAS PROTEGIDAS (requieren login) =============== */}
