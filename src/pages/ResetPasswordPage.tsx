@@ -1,8 +1,10 @@
 // src/pages/ResetPasswordPage.tsx
-import { useState, type FormEvent } from "react";
-import { Link } from "react-router-dom";
+import { useState, type FormEvent, useEffect } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import axiosClient from "@/api/axiosClient";
 
 function ResetPasswordPage() {
+  const [searchParams] = useSearchParams();
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -10,6 +12,13 @@ function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const token = searchParams.get("token");
+
+  useEffect(() => {
+    if (!token) {
+      setError("Token de recuperación no válido o expirado.");
+    }
+  }, [token]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -28,18 +37,28 @@ function ResetPasswordPage() {
       return setError("Las contraseñas no coinciden.");
     }
 
+    if (!token) {
+      return setError("Token de recuperación no válido.");
+    }
+
     try {
       setLoading(true);
-      // aquí llamarías al backend para guardar la nueva contraseña
-      await new Promise((res) => setTimeout(res, 1000));
+      const response = await axiosClient.post("/auth/reset-password", {
+        token,
+        password,
+      });
 
-      setSuccess("Tu contraseña fue actualizada correctamente.");
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 1500);
+      if (response.data?.ok) {
+        setSuccess("Tu contraseña fue actualizada correctamente.");
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+      } else {
+        setError("Error al actualizar la contraseña. El token podría haber expirado.");
+      }
     } catch (err) {
-      console.error(err);
-      setError("Error al actualizar la contraseña.");
+      console.error("Reset password error:", err);
+      setError("Error al actualizar la contraseña. Intenta de nuevo.");
     } finally {
       setLoading(false);
     }

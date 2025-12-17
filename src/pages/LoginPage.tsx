@@ -139,7 +139,7 @@ const LoginPage = () => {
               </label>
               <input
                 id="email"
-                type="text"
+                type="email"
                 autoComplete="email"
                 className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
                 placeholder="tu@email.com"
@@ -205,7 +205,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-4 text-[11px] text-center text-slate-500 dark:text-slate-500">
-            Admin: escribe tu correo agregando (.gym) antes del @. Ej: usuario(.gym)@gmail.com
+            Tip: usa "admin@gym.com" para acceso de administrador
           </p>
         </div>
       </div>

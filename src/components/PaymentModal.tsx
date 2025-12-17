@@ -74,9 +74,9 @@ export default function PaymentModal({ plan, onClose, onConfirm }: Props) {
   };
 
   const modal = (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg overflow-hidden">
+      <div className="relative w-full max-w-md rounded-lg bg-white p-6 shadow-lg overflow-hidden max-h-[85vh] overflow-y-auto">
         {/* Header: show different header when on card step */}
         {step === 2 && method === 'Tarjeta' ? (
           <div className="-mx-6 mb-4 flex items-center justify-between rounded-t-lg bg-white p-3">

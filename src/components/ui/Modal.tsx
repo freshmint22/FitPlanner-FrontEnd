@@ -1,5 +1,6 @@
 // src/components/ui/Modal.tsx
 import { useEffect, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 
 interface ModalProps {
   isOpen: boolean;
@@ -50,7 +51,7 @@ export function Modal({
 
   if (!isMounted) return null;
 
-  return (
+  const content = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay */}
       <div
@@ -62,7 +63,7 @@ export function Modal({
 
       {/* Contenedor modal */}
       <div
-        className={`relative z-10 w-full max-w-md rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-xl shadow-slate-200/80 backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-950/90 dark:shadow-black/50 ${animationClass}`}
+        className={`relative z-10 w-full max-w-md rounded-3xl border border-slate-200 bg-white px-5 py-4 shadow-xl shadow-slate-200/80 backdrop-blur-md dark:border-slate-700/70 dark:bg-slate-950/90 dark:shadow-black/50 ${animationClass} max-h-[85vh] overflow-y-auto`}
       >
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
@@ -92,4 +93,6 @@ export function Modal({
       </div>
     </div>
   );
+
+  return typeof document !== 'undefined' ? createPortal(content, document.body) : content;
 }

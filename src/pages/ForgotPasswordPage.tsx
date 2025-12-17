@@ -2,7 +2,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
-import { parseAdminEmail } from "@/utils/adminEmail";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -18,19 +17,24 @@ function ForgotPasswordPage() {
       return;
     }
 
+    // Validar que sea un correo @gmail.com válido
+    if (!email.endsWith("@gmail.com")) {
+      setError("Por favor ingresa un correo válido con dominio @gmail.com");
+      return;
+    }
+
     try {
       setLoading(true);
-      const { cleanEmail } = parseAdminEmail(email);
-      // Llamada real al backend; si falla, degradamos a simulación
-      try {
-        await axiosClient.post('/auth/forgot', { email: cleanEmail });
-      } catch {
-        await new Promise((res) => setTimeout(res, 700));
+      const response = await axiosClient.post("/auth/forgot-password", { email });
+      
+      if (response.data?.ok) {
+        window.location.href = "/forgot/sent";
+      } else {
+        setError("No pudimos procesar tu solicitud. Intenta de nuevo.");
       }
-      window.location.href = "/forgot/sent";
     } catch (err) {
-      console.error(err);
-      setError("No pudimos enviar el correo. Intenta de nuevo.");
+      console.error("Forgot password error:", err);
+      setError("No pudimos enviar el correo de recuperación. Por favor intenta de nuevo.");
     } finally {
       setLoading(false);
     }
@@ -75,13 +79,12 @@ function ForgotPasswordPage() {
                 Correo electrónico
               </label>
               <input
-                type="text"
+                type="email"
                 className="w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50"
                 placeholder="tu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Admin: escribe tu correo como usuario(.gym)@gmail.com</p>
             </div>
 
             <button
