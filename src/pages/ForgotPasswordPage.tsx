@@ -2,7 +2,6 @@
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import axiosClient from "@/api/axiosClient";
-import { parseAdminEmail } from "@/utils/adminEmail";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -20,10 +19,9 @@ function ForgotPasswordPage() {
 
     try {
       setLoading(true);
-      const { cleanEmail } = parseAdminEmail(email);
       // Llamada real al backend; si falla, degradamos a simulación
       try {
-        await axiosClient.post('/auth/forgot', { email: cleanEmail });
+        await axiosClient.post('/auth/forgot', { email });
       } catch {
         await new Promise((res) => setTimeout(res, 700));
       }
@@ -81,7 +79,7 @@ function ForgotPasswordPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Admin: escribe tu correo como usuario(.gym)@gmail.com</p>
+              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Ingresa el correo con el que te registraste.</p>
             </div>
 
             <button

@@ -121,21 +121,48 @@ export default function UserDashboard() {
           setTodayRoutine([]);
         }
 
-        // Load recent payments from localStorage (persisted receipts)
-        let paymentsArr: any[] = [];
+        // Load recent payments from server; fallback to localStorage if server unavailable
         try {
-          if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('fitplanner.pagos');
-            if (stored) {
-              const parsed = JSON.parse(stored);
-              if (Array.isArray(parsed)) {
-                paymentsArr = parsed.slice(0, 5);
-                setRecentPayments(paymentsArr);
+          const paymentsRes = await axiosClient.get('/pagos').catch(() => null);
+          const paymentsRaw = paymentsRes?.data?.data || paymentsRes?.data || [];
+          if (Array.isArray(paymentsRaw) && paymentsRaw.length) {
+            const mapped = (paymentsRaw || []).slice(0, 5).map((p: any, idx: number) => ({
+              planName: p.planName || p.planName || 'Membresía',
+              invoice: p.invoice || `#INV-${new Date(p.date || p.createdAt || Date.now()).getFullYear()}-${String(idx + 1).padStart(3, '0')}`,
+              date: new Date(p.date || p.createdAt || Date.now()).toLocaleDateString(),
+              amount: p.amount ? `$${Number(p.amount).toLocaleString()}` : '$0',
+              method: p.method || '',
+            }));
+            setRecentPayments(mapped);
+          } else {
+            // fallback to localStorage (for older persisted receipts)
+            let paymentsArr: any[] = [];
+            try {
+              if (typeof window !== 'undefined') {
+                const stored = localStorage.getItem('fitplanner.pagos');
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  if (Array.isArray(parsed)) {
+                    paymentsArr = parsed.slice(0, 5);
+                    setRecentPayments(paymentsArr);
+                  }
+                }
               }
+            } catch (e) {
+              // ignore
             }
           }
         } catch (e) {
-          // ignore
+          // final fallback: localStorage
+          try {
+            if (typeof window !== 'undefined') {
+              const stored = localStorage.getItem('fitplanner.pagos');
+              if (stored) {
+                const parsed = JSON.parse(stored);
+                if (Array.isArray(parsed)) setRecentPayments(parsed.slice(0, 5));
+              }
+            }
+          } catch {}
         }
 
         // Build simple notifications list from receipts and upcoming class

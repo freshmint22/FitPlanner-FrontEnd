@@ -60,7 +60,7 @@ type CurrentPlan = {
 };
 
 const MembershipsPage = () => {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const isAdmin = (user as any)?.role?.toUpperCase?.() === 'ADMIN' || (user as any)?.rol === 'ADMIN';
 
   const [currentPlan, setCurrentPlan] = useState<CurrentPlan>({
@@ -356,13 +356,28 @@ const MembershipsPage = () => {
         setAvailablePlans((prev) => prev.map((p) => ({ ...p, tag: (selectedPlanToPurchase && p.id === selectedPlanToPurchase.id) ? 'Actual' : undefined })));
 
         try {
-          const paymentsRes = await axiosClient.get('/pagos').catch(() => ({ data: { data: [] } }));
-          const payments = (paymentsRes.data && paymentsRes.data.data) || [];
-          if (payments.length > 0) {
+          // Prefer authoritative server data: refresh payments and profile
+          const [paymentsRes, profileRes] = await Promise.all([
+            axiosClient.get('/pagos').catch(() => ({ data: { data: [] } })),
+            axiosClient.get('/users/profile').catch(() => ({ data: null })),
+          ]);
+
+          const payments = (paymentsRes.data?.data || []) as any[];
+          if (payments.length) {
             setPaymentsHistory(payments.map((p: any, idx: number) => ({ id: idx + 1, date: new Date(p.date).toLocaleDateString(), invoice: `#INV-${new Date(p.date).getFullYear()}-${String(idx + 1).padStart(3, '0')}`, amount: `$${Number(p.amount).toLocaleString()}`, status: 'Pagado', planName: p.planName || m.name, method: p.method || 'Simulado' })));
           } else {
             const newPayment: Payment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
             setPaymentsHistory((prev) => [newPayment, ...prev]);
+          }
+
+          // If server returned a fresh profile, persist + update AuthContext via refreshUser
+          if (profileRes?.data) {
+            try {
+              if (typeof window !== 'undefined') localStorage.setItem('user', JSON.stringify(profileRes.data.data || profileRes.data));
+              refreshUser && refreshUser();
+            } catch (e) {
+              // ignore
+            }
           }
         } catch (e) {
           const newPayment: Payment = { id: paymentsHistory.length + 1, date: new Date().toLocaleDateString(), invoice: `#INV-${new Date().getFullYear()}-${String(paymentsHistory.length + 1).padStart(3,'0')}`, amount: (m.price ? `$${Number(m.price).toLocaleString()}` : (selectedPlanToPurchase?.price || '$0')), status: 'Pagado', planName: m.name, method: m.paymentMethod || 'Simulado' };
@@ -371,6 +386,9 @@ const MembershipsPage = () => {
         try {
           if (typeof window !== 'undefined' && userResult) {
             localStorage.setItem('user', JSON.stringify(userResult));
+            try {
+              refreshUser && refreshUser();
+            } catch {}
           }
         } catch (e) {
           console.warn('Failed to persist user to localStorage', e);
@@ -388,6 +406,9 @@ const MembershipsPage = () => {
           if (typeof window !== 'undefined') {
             const fakeUser = Object.assign({}, user || {}, { membership: { name: plan.name, price: plan.price, duration: duration, endDate: end.toISOString() } });
             localStorage.setItem('user', JSON.stringify(fakeUser));
+            try {
+              refreshUser && refreshUser();
+            } catch {}
           }
         } catch (e) {
           console.warn('Failed to persist fake user to localStorage', e);

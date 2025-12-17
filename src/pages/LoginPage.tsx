@@ -204,7 +204,7 @@ const LoginPage = () => {
           </form>
 
           <p className="mt-4 text-[11px] text-center text-slate-500 dark:text-slate-500">
-            Admin: escribe tu correo agregando (.gym) antes del @. Ej: usuario(.gym)@gmail.com
+            Ingresa tu correo y contraseña para acceder.
           </p>
         </div>
       </div>

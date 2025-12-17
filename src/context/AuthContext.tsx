@@ -2,18 +2,13 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
 import { loginRequest } from '@/api/authService';
-import { parseAdminEmail, roleFromInputEmail } from '@/utils/adminEmail';
 import { AuthContext } from './authContextCore';
 import type { AuthState } from './types';
 
 // ⚠️ Pon esto en false cuando conectes el backend real
 const DESIGN_MODE = false;
 
-// Role derivation now based on the input marker (.gym). Fallback USER.
-function deriveRoleFromEmail(email?: string): 'ADMIN' | 'USER' {
-  if (!email) return 'USER';
-  return roleFromInputEmail(email);
-}
+// Role is provided by backend or explicitly selected by user; default USER.
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [state, setState] = useState<AuthState>(() => {
@@ -23,7 +18,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user: {
           id: 'demo-1',
           name: 'Administrador',
-          email: 'admin(.gym)@gmail.com',
+          email: 'admin@gmail.com',
           role: 'ADMIN', // ✔️ ADMIN por defecto
         },
         token: 'demo-token',
@@ -44,10 +39,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 id: parsed.id,
                 name: parsed.name || parsed.email || 'Usuario',
                 email: parsed.email || '',
-                role: (parsed.role as any) || deriveRoleFromEmail(parsed.email),
+                role: (parsed.role as any) || 'USER',
                 phone: parsed.phone || undefined,
                 birthDate: parsed.birthDate || undefined,
                 gender: parsed.gender || undefined,
+                membership: (parsed as any).membership || null,
               }
             : null;
 
@@ -86,16 +82,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       return;
     }
 
-    // Región real — sanitiza email y detecta rol por marcador
-    const { cleanEmail, isAdmin } = parseAdminEmail(email);
-    const data = await loginRequest(cleanEmail, password);
+    // Región real — login with provided credentials; backend returns role
+    const data = await loginRequest(email, password);
     // Guardar sólo si vienen valores válidos
     if (data.accessToken) {
       localStorage.setItem('accessToken', data.accessToken);
     }
     if (data.user) {
       // Persist full user object returned by backend (may include phone, birthDate, gender)
-      const storedUser = { ...data.user, email: data.user.email || cleanEmail, role: isAdmin ? 'ADMIN' : 'USER' };
+      const storedUser = { ...data.user, email: data.user.email || email, role: (data.user.role as any) || 'USER' };
       localStorage.setItem('user', JSON.stringify(storedUser));
     }
 
@@ -104,23 +99,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       ? {
           id: String(data.user.id || data.user._id || ''),
           name: data.user.name || data.user.email || 'Usuario',
-          email: data.user.email || cleanEmail,
-          role: isAdmin ? 'ADMIN' : 'USER',
+          email: data.user.email || email,
+          role: (data.user.role as any) || 'USER',
           membership: (data.user as any).membership || null,
         }
       : null;
 
     setState({
       token: data.accessToken ?? null,
-      user: data.user
+          user: data.user
         ? {
-            id: data.user.id,
+            id: String((data.user as any).id || (data.user as any)._id || ''),
             name: data.user.name || data.user.email || 'Usuario',
-            email: data.user.email || cleanEmail,
-            role: isAdmin ? 'ADMIN' : 'USER',
+            email: data.user.email || email,
+            role: (data.user as any).role || 'USER',
             phone: (data.user as any).phone || undefined,
             birthDate: (data.user as any).birthDate || undefined,
             gender: (data.user as any).gender || undefined,
+            membership: (data.user as any).membership || null,
           }
         : null,
       isAuthenticated: Boolean(data.accessToken || data.user),
@@ -143,8 +139,35 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     setState({ user: null, token: null, isAuthenticated: false });
   };
 
+  const refreshUser = () => {
+    try {
+      if (typeof window !== 'undefined') {
+        const userStr = localStorage.getItem('user');
+        if (userStr) {
+          const parsed = JSON.parse(userStr);
+          const normalized = parsed
+              ? {
+                  id: String(parsed.id || parsed._id || ''),
+                  name: parsed.name || parsed.email || 'Usuario',
+                  email: parsed.email || '',
+                  role: (parsed.role as any) || 'USER',
+                  phone: parsed.phone || undefined,
+                  birthDate: parsed.birthDate || undefined,
+                  gender: parsed.gender || undefined,
+                  membership: (parsed as any).membership || null,
+                }
+              : null;
+
+          setState((s) => ({ ...s, user: normalized }));
+        }
+      }
+    } catch (e) {
+      // ignore
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ ...state, login, logout }}>
+    <AuthContext.Provider value={{ ...state, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
