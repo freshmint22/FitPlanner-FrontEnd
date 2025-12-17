@@ -2,7 +2,6 @@ import type { FormEvent } from "react";
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { registerRequest, type Role } from "@/api/authService";
-import { parseAdminEmail } from "@/utils/adminEmail";
 
 const RegisterPage = () => {
   const navigate = useNavigate();
@@ -21,11 +20,7 @@ const RegisterPage = () => {
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  // Auto-detect admin role based on (.gym) marker in email
-  useEffect(() => {
-    const { isAdmin } = parseAdminEmail(email);
-    if (isAdmin && role !== "ADMIN") setRole("ADMIN");
-  }, [email]);
+  // Role is explicitly selected by the user via the role dropdown.
 
   const validateForm = () => {
     if (!firstName || !lastName || !email || !password || !confirmPassword) {
@@ -38,12 +33,9 @@ const RegisterPage = () => {
     }
 
     if (role === "ADMIN" && !email.toLowerCase().endsWith("@gym.com")) {
+      // We don't enforce special markers other than domain check for old behavior; keep a soft warning
       return "Los administradores deben registrarse con un correo @gym.com";
-  const [role, setRole] = useState<Role>("USER");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    }
 
     if (password.length < 8) {
       return "La contraseña debe tener al menos 8 caracteres.";
@@ -55,12 +47,8 @@ const RegisterPage = () => {
 
     return null;
   };
-    // Validación para administradores: deben incluir el marcador (.gym) antes del @
-    if (role === "ADMIN") {
-      const { isAdmin } = parseAdminEmail(email);
-      if (!isAdmin) {
-        return "Para registrar un administrador escribe el correo como usuario(.gym)@gmail.com";
-      }
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -86,19 +74,7 @@ const RegisterPage = () => {
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
-      const axiosErr = err as { response?: { data?: unknown } };
-      const { cleanEmail } = parseAdminEmail(email);
-      await registerRequest({
-        firstName,
-        lastName,
-        email: cleanEmail,
-        password,
-        role,
-      });
-        setError(
-          "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
-        );
-      }
+      setError("Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde.");
     } finally {
       setLoading(false);
     }
