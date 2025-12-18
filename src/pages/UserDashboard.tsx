@@ -38,6 +38,7 @@ export default function UserDashboard() {
       return;
     }
     setIsLoading(true);
+    console.log(user)
 
     const fetchUserStats = async () => {
       try {

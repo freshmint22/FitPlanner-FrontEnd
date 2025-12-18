@@ -32,11 +32,6 @@ const RegisterPage = () => {
       return "Ingresa un correo electrónico válido.";
     }
 
-    if (role === "ADMIN" && !email.toLowerCase().endsWith("@gym.com")) {
-      // We don't enforce special markers other than domain check for old behavior; keep a soft warning
-      return "Los administradores deben registrarse con un correo @gym.com";
-    }
-
     if (password.length < 8) {
       return "La contraseña debe tener al menos 8 caracteres.";
     }

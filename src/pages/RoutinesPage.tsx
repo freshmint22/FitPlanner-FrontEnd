@@ -180,7 +180,7 @@ const RoutinesPage = () => {
             const exercisesArr: any[] = [];
             if (Array.isArray(r.exercises)) {
               for (const e of r.exercises) {
-                if (typeof e === 'string') exercisesArr.push({ name: e, done: !!e.done });
+                if (typeof e === 'string') exercisesArr.push({ name: e, done: false });
                 else if (typeof e === 'object') exercisesArr.push({ name: e.name || e.nombre || String(e), sets: e.sets, rest: e.rest, done: !!e.done });
               }
             } else if (Array.isArray(r.dias)) {
@@ -371,8 +371,9 @@ const RoutinesPage = () => {
                     </div>
                     <div className="flex items-center gap-3 text-xs text-slate-300">
                       {(() => {
-                        const hasExercises = Array.isArray(routine.exercises) && routine.exercises.length > 0;
-                        const completed = hasExercises && routine.exercises.some((e: any) => !!e.done);
+                        const exercises = routine.exercises || [];
+                        const hasExercises = Array.isArray(exercises) && exercises.length > 0;
+                        const completed = hasExercises && exercises.some((e: any) => !!e.done);
                         const statusText = completed ? 'Activa' : (hasExercises ? 'Inactiva' : (routine.status || 'Inactiva'));
                         return (
                           <span className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${completed ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-600/10 text-rose-400'}`}>
