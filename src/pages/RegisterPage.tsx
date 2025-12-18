@@ -32,10 +32,7 @@ const RegisterPage = () => {
       return "Ingresa un correo electrónico válido.";
     }
 
-    if (role === "ADMIN" && !email.toLowerCase().endsWith("@gym.com")) {
-      // We don't enforce special markers other than domain check for old behavior; keep a soft warning
-      return "Los administradores deben registrarse con un correo @gym.com";
-    }
+    // No special-case validation for ADMIN role: allow any valid email.
 
     if (password.length < 8) {
       return "La contraseña debe tener al menos 8 caracteres.";
@@ -70,11 +67,22 @@ const RegisterPage = () => {
         role,
       });
 
-      setSuccess("Usuario registrado con éxito, ahora ingresa con tu nueva cuenta!");
+      setSuccess(`Usuario registrado con éxito con el rol ${role}, ahora ingresa con tu nueva cuenta!`);
       setTimeout(() => navigate("/login"), 2000);
     } catch (err) {
       console.error(err);
-      setError("Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde.");
+      const axiosErr = err as { response?: { data?: unknown } };
+      type ApiError = { error?: { code?: string } };
+      const apiError = axiosErr?.response?.data as ApiError | undefined;
+      if (apiError?.error?.code === "email_exists") {
+        setError("Este correo ya existe. Intenta con uno diferente.");
+      } else if (!axiosErr?.response) {
+        setError("No se pudo conectar al servidor. Intenta más tarde.");
+      } else {
+        setError(
+          "Ocurrió un error al crear la cuenta. Verifica los datos o intenta más tarde."
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -181,140 +189,139 @@ const RegisterPage = () => {
                 />
               </div>
 
-              <div>
-                <label
-                  htmlFor="lastName"
-                  className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
-                >
-                  Apellidos
-                </label>
-                <input
-                  id="lastName"
-                  type="text"
-                  className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
-                  placeholder="Pérez"
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                />
-              </div>
-            </div>
+                    <div>
+                      <label
+                        htmlFor="lastName"
+                        className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
+                      >
+                        Apellidos
+                      </label>
+                      <input
+                        id="lastName"
+                        type="text"
+                        className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
+                        placeholder="Pérez"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                      />
+                    </div>
+                  </div>
 
-            <div>
-              <label
-                htmlFor="email"
-                className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
-              >
-                Correo electrónico
-              </label>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-                type="text"
+                  <div>
+                    <label
+                      htmlFor="email"
+                      className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
+                    >
+                      Correo electrónico
+                    </label>
+                    <input
+                      id="email"
+                      type="email"
+                      autoComplete="email"
+                      className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
+                      placeholder="tu@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                    />
+                  </div>
 
-            <div>
-              <label
-                htmlFor="role"
-                className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
-              >
-              <p className="mt-1 text-[11px] text-slate-500 dark:text-slate-400">Admin: escribe tu correo como usuario(.gym)@gmail.com. Ej: lauravalentinaarbelaez(.gym)@gmail.com</p>
-                Rol
-              </label>
-              <select
-                id="role"
-                className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
-                value={role}
-                onChange={(e) => setRole(e.target.value as Role)}
-              >
-                <option value="USER">Usuario</option>
-                <option value="ADMIN">Administrador</option>
-              </select>
-            </div>
+                  <div>
+                    <label
+                      htmlFor="role"
+                      className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
+                    >
+                      Rol
+                    </label>
+                    <select
+                      id="role"
+                      className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
+                      value={role}
+                      onChange={(e) => setRole(e.target.value as Role)}
+                    >
+                      <option value="USER">Usuario</option>
+                      <option value="ADMIN">Administrador</option>
+                    </select>
+                  </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label
-                  htmlFor="password"
-                  className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
-                >
-                  Contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label
+                        htmlFor="password"
+                        className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
+                      >
+                        Contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="password"
+                          type={showPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
+                        >
+                          {showPassword ? "Ocultar" : "Mostrar"}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor="confirmPassword"
+                        className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
+                      >
+                        Confirmar contraseña
+                      </label>
+                      <div className="relative">
+                        <input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? "text" : "password"}
+                          autoComplete="new-password"
+                          className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword((v) => !v)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
+                        >
+                          {showConfirmPassword ? "Ocultar" : "Mostrar"}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                   <button
-                    type="button"
-                    onClick={() => setShowPassword((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
+                    type="submit"
+                    disabled={loading}
+                    className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
                   >
-                    {showPassword ? "Ocultar" : "Mostrar"}
+                    {loading ? "Creando cuenta..." : "Crear cuenta"}
                   </button>
-                </div>
-              </div>
+                </form>
 
-              <div>
-                <label
-                  htmlFor="confirmPassword"
-                  className="block text-sm font-medium text-slate-700 mb-1 dark:text-slate-200"
-                >
-                  Confirmar contraseña
-                </label>
-                <div className="relative">
-                  <input
-                    id="confirmPassword"
-                    type={showConfirmPassword ? "text" : "password"}
-                    autoComplete="new-password"
-                    className="block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 pr-10 text-sm text-slate-900 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-50 dark:focus:ring-blue-500/30"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword((v) => !v)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 rounded px-2 py-1 text-[11px] font-semibold text-slate-500 hover:text-slate-800 focus:outline-none focus:ring-0 dark:text-slate-300 dark:hover:text-slate-100"
+                <p className="mt-4 text-[11px] text-center text-slate-500 dark:text-slate-500">
+                  ¿Ya tienes una cuenta?{" "}
+                  <Link
+                    to="/login"
+                    className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
                   >
-                    {showConfirmPassword ? "Ocultar" : "Mostrar"}
-                  </button>
-                </div>
+                    Inicia sesión aquí.
+                  </Link>
+                </p>
               </div>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="mt-2 inline-flex w-full items-center justify-center rounded-lg bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/40 transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-70"
-            >
-              {loading ? "Creando cuenta..." : "Crear cuenta"}
-            </button>
-          </form>
-
-          <p className="mt-4 text-[11px] text-center text-slate-500 dark:text-slate-500">
-            ¿Ya tienes una cuenta?{" "}
-            <Link
-              to="/login"
-              className="font-semibold text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300"
-            >
-              Inicia sesión aquí.
-            </Link>
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
+          </div>
+        );
+      };
 
 export default RegisterPage;
 

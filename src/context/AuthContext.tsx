@@ -70,7 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
   });
 
-  const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string): Promise<'ADMIN' | 'USER' | void> => {
     if (DESIGN_MODE) {
       // ✔️ Login simulado como ADMIN también
       setState({
@@ -83,29 +83,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         token: 'demo-token',
         isAuthenticated: true,
       });
-      return;
+      return 'ADMIN';
     }
 
     // Región real — sanitiza email y detecta rol por marcador
-    const { cleanEmail, isAdmin } = parseAdminEmail(email);
+    const { cleanEmail } = parseAdminEmail(email);
     const data = await loginRequest(cleanEmail, password);
+    
+    // El rol viene del backend, no lo derivamos del email
+    const userRole = data.user?.role || 'USER';
+    
     // Guardar sólo si vienen valores válidos
     if (data.accessToken) {
       localStorage.setItem('accessToken', data.accessToken);
     }
     if (data.user) {
       // Persist full user object returned by backend (may include phone, birthDate, gender)
-      const storedUser = { ...data.user, email: data.user.email || cleanEmail, role: isAdmin ? 'ADMIN' : 'USER' };
+      const storedUser = { ...data.user, email: data.user.email || cleanEmail };
       localStorage.setItem('user', JSON.stringify(storedUser));
     }
 
     // Normalize user object and include membership if present
     const normalized = data.user
       ? {
-          id: String(data.user.id || data.user._id || ''),
+          id: String(data.user.id || ''),
           name: data.user.name || data.user.email || 'Usuario',
           email: data.user.email || cleanEmail,
-          role: isAdmin ? 'ADMIN' : 'USER',
+          role: userRole,
           membership: (data.user as any).membership || null,
         }
       : null;
@@ -117,7 +121,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             id: data.user.id,
             name: data.user.name || data.user.email || 'Usuario',
             email: data.user.email || cleanEmail,
-            role: isAdmin ? 'ADMIN' : 'USER',
+            role: userRole,
             phone: (data.user as any).phone || undefined,
             birthDate: (data.user as any).birthDate || undefined,
             gender: (data.user as any).gender || undefined,
@@ -125,6 +129,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         : null,
       isAuthenticated: Boolean(data.accessToken || data.user),
     });
+
+    return userRole;
   };
 
   const logout = () => {

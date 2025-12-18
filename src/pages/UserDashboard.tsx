@@ -31,6 +31,7 @@ export default function UserDashboard() {
   const [todayRoutine, setTodayRoutine] = useState<any[]>([]);
   const [myRoutines, setMyRoutines] = useState<any[]>([]);
 
+  console.log(user)
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
@@ -285,7 +286,6 @@ export default function UserDashboard() {
             <PageSection title="Recordatorios rápidos" description="Pequeños detalles que mantienen tu progreso en marcha." className="">
               <RotatingTips
                 intervalMs={3500}
-                compact
                 tips={[
                   '💧 Intenta tomar al menos 2 litros de agua durante el día.',
                   '😴 Procura dormir entre 7 y 8 horas para una mejor recuperación.',
@@ -318,7 +318,6 @@ export default function UserDashboard() {
                     <div className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm w-48 text-center">
                       <div className="text-sm font-semibold text-slate-700">{user?.membership?.name || 'Plan'}</div>
                       <div className="mt-2 text-2xl font-extrabold text-slate-900">{user?.membership?.price || currentPlan.price}</div>
-                      <p className="mt-2 text-xs text-slate-500">{user?.membership?.description || ''}</p>
                       <div className="mt-4">
                         <button onClick={() => (window.location.href = '/my-membership')} className="rounded-full bg-gradient-to-r from-blue-500 to-emerald-400 px-4 py-2 text-sm font-semibold text-white">Ver membresía</button>
                       </div>

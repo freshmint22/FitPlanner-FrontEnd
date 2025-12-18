@@ -39,7 +39,7 @@ export const loginRequest = async (email: string, password: string) => {
         id: profile.data?.id || profile.data?.email || 'unknown',
         name: profile.data?.name || profile.data?.email || 'Usuario',
         email: profile.data?.email,
-        role: (profile.data?.role as Role) || 'USER',
+        role: profile.data?.role ? (profile.data.role.toUpperCase() === 'ADMIN' ? 'ADMIN' : 'USER') : 'USER',
       };
     } catch (err) {
       // ignore profile fetch errors

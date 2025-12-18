@@ -6,7 +6,7 @@ import { useAuth } from "@/context/useAuth";
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,8 +25,9 @@ const LoginPage = () => {
 
     try {
       setLoading(true);
-      await login(email, password);
-      navigate("/dashboard");
+      const role = await login(email, password);
+      const dest = role === 'ADMIN' ? '/admin' : '/dashboard';
+      navigate(dest);
     } catch (err: unknown) {
       console.error(err);
       const error = err as { response?: { data?: { error?: { message?: string } } }; message?: string };

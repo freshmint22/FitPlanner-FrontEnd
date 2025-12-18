@@ -17,6 +17,9 @@ export interface AuthUser {
   email: string;
   role: Role;
   membership?: Membership | null;
+  phone?: string | null;
+  birthDate?: string | null;
+  gender?: string | null;
 }
 
 export interface AuthState {
@@ -26,7 +29,7 @@ export interface AuthState {
 }
 
 export interface AuthContextValue extends AuthState {
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<'ADMIN' | 'USER' | void>;
   logout: () => void;
   refreshUser?: () => void;
 }
