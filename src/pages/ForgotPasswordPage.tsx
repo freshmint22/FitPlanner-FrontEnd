@@ -1,6 +1,7 @@
 // src/pages/ForgotPasswordPage.tsx
 import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import axiosClient from "@/api/axiosClient";
 
 function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -16,14 +17,24 @@ function ForgotPasswordPage() {
       return;
     }
 
+    // Validar que sea un correo @gmail.com válido
+    if (!email.endsWith("@gmail.com")) {
+      setError("Por favor ingresa un correo válido con dominio @gmail.com");
+      return;
+    }
+
     try {
       setLoading(true);
-      // aquí iría la llamada real al backend
-      await new Promise((res) => setTimeout(res, 1000));
-      window.location.href = "/forgot/sent";
+      const response = await axiosClient.post("/auth/forgot-password", { email });
+      
+      if (response.data?.ok) {
+        window.location.href = "/forgot/sent";
+      } else {
+        setError("No pudimos procesar tu solicitud. Intenta de nuevo.");
+      }
     } catch (err) {
-      console.error(err);
-      setError("No pudimos enviar el correo. Intenta de nuevo.");
+      console.error("Forgot password error:", err);
+      setError("No pudimos enviar el correo de recuperación. Por favor intenta de nuevo.");
     } finally {
       setLoading(false);
     }

@@ -5,13 +5,17 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { PageSection } from "@/components/ui/PageSection";
 import { useAuth } from "@/context/useAuth";
 import { changePasswordRequest, deleteAccountRequest, updateProfileRequest } from "@/api/authService";
+import axiosClient from '@/api/axiosClient';
 
 export default function SettingsPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isAdmin = (user as any)?.role?.toUpperCase?.() === 'ADMIN' || (user as any)?.rol === 'ADMIN';
   const [showPassword, setShowPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [passwordError, setPasswordError] = useState("");
@@ -19,14 +23,28 @@ export default function SettingsPage() {
   const [deleteError, setDeleteError] = useState("");
   const [isChangingPassword, setIsChangingPassword] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-  const memberSince = "Enero 2024";
+  const memberSince = "Diciembre 2025";
   const fullName = user?.name?.trim() ?? "";
   const [firstName = "", ...restName] = fullName.split(/\s+/).filter(Boolean);
   const lastName = restName.join(" ");
   const email = user?.email ?? "";
   const phone = (user as { phone?: string })?.phone ?? "";
-  const birthDate = (user as { birthDate?: string })?.birthDate ?? "";
-  const gender = (user as { gender?: string })?.gender ?? "";
+  const birthDateRaw = (user as { birthDate?: string })?.birthDate ?? "";
+  const genderRaw = (user as { gender?: string })?.gender ?? "";
+
+  // Map backend gender (e.g. "Masculino") to select value (lowercase)
+  const genderMapToSelect: Record<string, string> = {
+    Masculino: 'masculino',
+    Femenino: 'femenino',
+    Otro: 'otro',
+    masculino: 'masculino',
+    femenino: 'femenino',
+    otro: 'otro',
+  };
+  const gender = genderMapToSelect[genderRaw] || "";
+
+  // Normalize birthDate for input[type=date] (YYYY-MM-DD) if available
+  const birthDate = birthDateRaw ? new Date(birthDateRaw).toISOString().slice(0, 10) : "";
   const initials = fullName
     ? fullName
         .split(/\s+/)
@@ -93,14 +111,31 @@ export default function SettingsPage() {
             if (!user?.id) return;
 
             const formData = new FormData(e.currentTarget);
-            const payload: Record<string, string> = {
-              firstName: formData.get("firstName") as string,
-              lastName: formData.get("lastName") as string,
-              email: formData.get("email") as string,
-              phone: formData.get("phone") as string,
-              birthDate: formData.get("birthDate") as string,
-              gender: formData.get("gender") as string,
+            // Normalizar y mapear valores antes de enviar al backend
+            const rawGender = (formData.get("gender") as string) || "";
+            const genderMap: Record<string, string> = {
+              masculino: "Masculino",
+              femenino: "Femenino",
+              otro: "Otro",
+              Masculino: "Masculino",
+              Femenino: "Femenino",
+              Otro: "Otro",
             };
+
+            // Do NOT allow changing email here; omit it from the update payload
+            const payload: Record<string, string> = {
+              firstName: (formData.get("firstName") as string) || "",
+              lastName: (formData.get("lastName") as string) || "",
+            };
+
+            const phoneRaw = (formData.get("phone") as string) || "";
+            if (phoneRaw) payload.phone = phoneRaw.trim();
+
+            const bd = (formData.get("birthDate") as string) || "";
+            if (bd) payload.birthDate = new Date(bd).toISOString();
+
+            const mappedGender = genderMap[rawGender] || undefined;
+            if (mappedGender) payload.gender = mappedGender;
 
             // Filtrar valores vacíos
             Object.keys(payload).forEach(key => {
@@ -112,21 +147,35 @@ export default function SettingsPage() {
             try {
               const result = await updateProfileRequest(user.id, payload);
               console.log("✅ Respuesta del servidor:", result);
-              
-              // Actualizar el contexto con los nuevos datos
-              const updatedUser = {
-                ...user,
-                name: `${payload.firstName || firstName} ${payload.lastName || lastName}`.trim(),
-                email: payload.email || email,
-                phone: payload.phone || phone,
-                birthDate: payload.birthDate || birthDate,
-                gender: payload.gender || gender,
-              };
-              
-              // Guardar en localStorage para persistencia
-              localStorage.setItem("user", JSON.stringify(updatedUser));
-              
-              // Recargar la página para actualizar el contexto
+
+              // Try to fetch authoritative profile from server (includes phone, birthDate, gender)
+              try {
+                const profileResp = await axiosClient.get('/users/profile');
+                const profileData = profileResp.data;
+                try {
+                  localStorage.setItem('user', JSON.stringify(profileData));
+                } catch (err) {
+                  // ignore storage errors
+                }
+              } catch (err) {
+                // If profile fetch fails, fall back to returned update data
+                const updatedMember = (result && (result as any).data) || null;
+                const newUser = {
+                  id: user.id,
+                  name:
+                    (payload.firstName || updatedMember?.firstName || firstName) +
+                    " " +
+                    (payload.lastName || updatedMember?.lastName || lastName),
+                  email: payload.email || updatedMember?.email || email,
+                  role: user.role,
+                  phone: payload.phone || updatedMember?.phone || phone,
+                  birthDate: payload.birthDate || (updatedMember?.birthDate ? new Date(updatedMember.birthDate).toISOString() : birthDate),
+                  gender: payload.gender || updatedMember?.gender || gender,
+                };
+                try { localStorage.setItem('user', JSON.stringify(newUser)); } catch {}
+              }
+
+              // Reload so AuthContext rehydrates from localStorage and UI shows updated fields
               window.location.reload();
               
             } catch (error) {
@@ -175,13 +224,19 @@ export default function SettingsPage() {
               >
                 Correo electrónico
               </label>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                defaultValue={email}
-                className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
-              />
+              <div>
+                <input
+                  id="email"
+                  name="email"
+                  type="email"
+                  defaultValue={email}
+                  readOnly
+                  disabled
+                  title="El correo no puede modificarse desde aquí"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-slate-100 px-3 text-sm text-slate-700 outline-none dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+                />
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-500">El correo no se puede modificar desde aquí.</p>
+              </div>
             </div>
 
             <div>
@@ -269,6 +324,11 @@ export default function SettingsPage() {
             setPasswordError("");
             setPasswordSuccess("");
 
+            if (!currentPassword) {
+              setPasswordError("Ingresa tu contraseña actual para continuar");
+              return;
+            }
+
             if (!newPassword || !confirmPassword) {
               setPasswordError("Todos los campos son requeridos");
               return;
@@ -286,8 +346,9 @@ export default function SettingsPage() {
 
             try {
               setIsChangingPassword(true);
-              await changePasswordRequest({ currentPassword: "", newPassword });
+              await changePasswordRequest({ currentPassword, newPassword });
               setPasswordSuccess("Contraseña actualizada exitosamente");
+              setCurrentPassword("");
               setNewPassword("");
               setConfirmPassword("");
             } catch (error: unknown) {
@@ -310,6 +371,41 @@ export default function SettingsPage() {
 
             <div>
               <label
+                htmlFor="currentPassword"
+                className="mb-1 block text-xs font-medium text-slate-300"
+              >
+                Contraseña actual
+              </label>
+              <div className="relative">
+                <input
+                  id="currentPassword"
+                  type={showCurrentPassword ? "text" : "password"}
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="Ingresa tu contraseña actual"
+                  className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-300"
+                >
+                  {showCurrentPassword ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="h-5 w-5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            <div>
+              <label
                 htmlFor="newPassword"
                 className="mb-1 block text-xs font-medium text-slate-300"
               >
@@ -322,6 +418,7 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Ingresa tu nueva contraseña"
+                  disabled={!currentPassword}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <button
@@ -357,6 +454,7 @@ export default function SettingsPage() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirma tu nueva contraseña"
+                  disabled={!currentPassword}
                   className="h-10 w-full rounded-xl border border-slate-300 bg-white px-3 pr-10 text-sm text-slate-900 outline-none transition focus:border-sky-500 focus:ring-2 focus:ring-sky-500/30 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50"
                 />
                 <button
@@ -379,9 +477,9 @@ export default function SettingsPage() {
             </div>
 
             <div className="mt-4 flex justify-end">
-              <button
+                <button
                 type="submit"
-                disabled={isChangingPassword}
+                disabled={isChangingPassword || !currentPassword}
                 className="btn-raise inline-flex items-center justify-center rounded-2xl bg-sky-600 px-5 py-2 text-xs font-semibold text-white shadow hover:bg-sky-500 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-sky-500 dark:hover:bg-sky-400"
               >
                 {isChangingPassword ? "Actualizando..." : "Actualizar contraseña"}
@@ -391,46 +489,48 @@ export default function SettingsPage() {
         </div>
       </PageSection>
 
-      {/* Información de membresía */}
-      <PageSection
-        title="Información de membresía"
-        description="Detalles de tu plan actual en el gimnasio."
-      >
-        <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100">
-          <div className="mb-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
-              Plan actual
-            </p>
-            <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
-              Premium Mensual
-            </p>
-            <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
-              Acceso completo a todas las áreas del gimnasio y clases grupales.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-4 text-xs">
-            <div>
-              <p className="text-slate-600 dark:text-slate-400">Estado</p>
-              <p className="mt-1 font-semibold text-emerald-400">Activo</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Fecha de inicio</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 01 / 2024</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Renovación</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 04 / 2024</p>
-            </div>
-            <div>
-              <p className="text-slate-400">Próximo cobro</p>
-              <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
-                $120.000 COP
+      {/* Información de membresía (solo usuarios no admin) */}
+      {!isAdmin && (
+        <PageSection
+          title="Información de membresía"
+          description="Detalles de tu plan actual en el gimnasio."
+        >
+          <div className="rounded-3xl border border-slate-200 bg-white px-6 py-5 text-sm text-slate-900 dark:border-slate-800 dark:bg-slate-950/80 dark:text-slate-100">
+            <div className="mb-4">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-400">
+                Plan actual
+              </p>
+              <p className="mt-1 text-lg font-semibold text-slate-900 dark:text-slate-50">
+                Premium Mensual
+              </p>
+              <p className="mt-1 text-xs text-slate-600 dark:text-slate-400">
+                Acceso completo a todas las áreas del gimnasio y clases grupales.
               </p>
             </div>
+
+            <div className="grid gap-4 md:grid-cols-4 text-xs">
+              <div>
+                <p className="text-slate-600 dark:text-slate-400">Estado</p>
+                <p className="mt-1 font-semibold text-emerald-400">Activo</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Fecha de inicio</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 01 / 2024</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Renovación</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">01 / 04 / 2024</p>
+              </div>
+              <div>
+                <p className="text-slate-400">Próximo cobro</p>
+                <p className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+                  $120.000 COP
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </PageSection>
+        </PageSection>
+      )}
 
       {/* Zona de peligro */}
       <PageSection

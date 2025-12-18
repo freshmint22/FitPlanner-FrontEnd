@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import membersService from '@/api/membersService';
 import type { MemberDto } from '@/api/membersService';
 import { EditMemberModal } from '@/components/modals/EditMemberModal';
+import { CreateMemberModal } from '@/components/modals/CreateMemberModal';
 
 const MembersPage = () => {
   const [members, setMembers] = useState<MemberDto[]>([]);
@@ -10,6 +11,7 @@ const MembersPage = () => {
   const [query, setQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<MemberDto | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const fetchMembers = async (q = '') => {
     setLoading(true);
@@ -51,7 +53,10 @@ const MembersPage = () => {
               >
                 Buscar
               </button>
-              <button className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40">
+              <button
+                onClick={() => setIsCreateModalOpen(true)}
+                className="rounded-lg bg-gradient-to-r from-green-600 to-emerald-400 px-3 py-1.5 text-xs font-semibold text-white shadow shadow-emerald-500/40"
+              >
                 Nuevo miembro
               </button>
             </div>
@@ -111,6 +116,15 @@ const MembersPage = () => {
           setSelectedMember(null);
         }}
         member={selectedMember}
+        onSuccess={() => {
+          fetchMembers(query);
+        }}
+      />
+
+      {/* Modal de creación */}
+      <CreateMemberModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
         onSuccess={() => {
           fetchMembers(query);
         }}
